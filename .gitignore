@@ -1,5 +1,8 @@
 *
 !.gitignore
-!.vim
-!.vim/*
-!vim.rc
+!.run
+!.Makefile
+!.scratch
+!.scratch/*
+!.src/applications
+!.src/applications/*
