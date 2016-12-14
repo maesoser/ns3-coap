@@ -1,8 +1,8 @@
 *
 !.gitignore
-!.run
-!.Makefile
-!.scratch
-!.scratch/*
-!.src/applications
-!.src/applications/*
+!run
+!Makefile
+!scratch
+!scratch/*
+!src/applications
+!src/applications/*

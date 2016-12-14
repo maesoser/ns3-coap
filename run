@@ -1,0 +1,75 @@
+#!/bin/bash
+
+if [ $1 = "help" ]; then
+    echo ""
+    echo "THIS IS A STATIC HELP OUTPUT - Real script could could have changed since this snapshot."
+    echo ""
+    echo "Script Arguments:"
+    echo "    run"
+    echo "    clean"
+    echo ""
+    echo "Program Arguments:"
+    echo "    --distance:     Distance between nodes (m) [500]"
+    echo "    --speed:        Speed of the nodes (m/s) [0]"
+    echo "    --gain:         Rx Gain (dB) [-10]"
+    echo "    --txpower:      Transmission Power (dB) [13]"
+    echo "    --energy:       Initial Energy (J)) [300]"
+    echo "    --voltage:      Battery voltage (v) [5]"
+    echo "    --idlecurrent:  Current consumed when iddle (A) [0.015]"
+    echo "    --txcurrent:    Current consumed when transmitting (A) [0.12]"
+    echo "    --routing:      Current routing protocol 0=NONE,1=OLSR,2=AODV,3=DSDV,4=DSR 5=SMF [0]"
+    echo "    --verbose:      Verbosity level 0=ENERGY, 1=LINK, 2=WIFI [0]"
+    echo ""
+    echo "General Arguments:"
+    echo "    --PrintGlobals:              Print the list of globals."
+    echo "    --PrintGroups:               Print the list of groups."
+    echo "    --PrintGroup=[group]:        Print all TypeIds of group."
+    echo "    --PrintTypeIds:              Print all TypeIds."
+    echo "    --PrintAttributes=[typeid]:  Print all attributes of typeid."
+    echo "    --PrintHelp:                 Print this help message."
+elif [ $1 = "clean" ]; then
+    echo Removing stored .zip files
+    ls *.zip
+    rm *.zip
+    rm energy_*
+    rm *.pcap
+    rm coap_trace.tr
+    rm coap_animation.xml
+    rm state_*
+    rm routetables
+    rm output.log
+
+else
+  echo Starting simulation
+  a="$(echo "$*" | tr ' ' _ | tr = _ | tr -d -)"
+  b="$(date +%s)"
+  c="_"
+  echo Simulating...
+  echo Arguments: $*
+  ./waf --run "coap $*" &> output.log
+  echo Done
+  d="$a$c$b".zip
+  echo "Copying animation"
+  cp coap_animation.xml tempanim.xml
+  echo Compressing simulation to $d
+  zip $d energy_*
+  zip -u $d output.log
+  zip -u $d *.pcap
+  zip -u $d coap_trace.tr
+  zip -u $d coap_animation.xml
+  zip -u $d state_*
+  zip -u $d scratch/coap.cc
+  zip -u $d routetables
+  echo Done
+  echo Removing files
+  rm energy_*
+  rm *.pcap
+  rm coap_trace.tr
+  rm coap_animation.xml
+  rm state_*
+  rm routetables
+  #tail -10 output.log
+  #rm output.log
+  du -h $d
+  #../netanim-3.107/NetAnim &
+fi
