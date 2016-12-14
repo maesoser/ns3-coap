@@ -1,6 +1,7 @@
 *
 !.gitignore
 !run
+!README.md
 !Makefile
 !scratch
 !scratch/*
