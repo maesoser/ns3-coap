@@ -7,6 +7,8 @@
 !scratch/*
 !src
 src/*
+!src/smf
+!src/smf/*
 !src/applications
 !src/applications/*
 !src/applications/bindings
