@@ -196,7 +196,7 @@ int main (int argc, char *argv[])
   cmd.AddValue("txcurrent","Current consumed when transmitting (A)",txCurrent);
   cmd.AddValue("routing","Current routing protocol 0=NONE,1=OLSR,2=SMF-AODV,3=SMF-DSDV,4=DSR 5=SMF-OLSR",protocol);
   cmd.AddValue("verbose","Verbosity level 0=ENERGY, 1=LINK, 2=WIFI",verbose);
-  cmd.AddValue("interval","The time to wait between packets. If it is 0-> Server Mode.",interval)
+  cmd.AddValue("interval","The time to wait between packets. If it is 0-> Server Mode.",interval);
   cmd.AddValue("maxAge","Delete items after max-Age? If >0 it is the age given to the services",maxAge);
   cmd.Parse (argc, argv);
 

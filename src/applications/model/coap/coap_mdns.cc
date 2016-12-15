@@ -146,3 +146,204 @@ void MDns::Display() const {
   NS_LOG_INFO("      AR_COUNT: ");
   NS_LOG_INFO(ar_count);
 }
+
+Query MDns::Parse_Query() {
+  Query return_value;
+  return_value.buffer_pointer = buffer_pointer;
+
+  buffer_pointer = nameFromDnsPointer(return_value.qname_buffer, 0, MAX_MDNS_NAME_LEN, data_buffer, buffer_pointer);
+
+  uint8_t qtype_0 = data_buffer[buffer_pointer++];
+  uint8_t qtype_1 = data_buffer[buffer_pointer++];
+  uint8_t qclass_0 = data_buffer[buffer_pointer++];
+  uint8_t qclass_1 = data_buffer[buffer_pointer++];
+
+  return_value.qtype = (qtype_0 << 8) + qtype_1;
+
+  return_value.unicast_response = (0b10000000 & qclass_0);
+  return_value.qclass = ((qclass_0 & 0b01111111) << 8) + qclass_1;
+
+  return_value.valid = true;
+  if (return_value.qclass != 0xFF && return_value.qclass != 0x01) {
+    // QCLASS is not ANY (0xFF) or INternet (0x01).
+    NS_LOG_INFO(" **ERROR QCLASS** ");
+    NS_LOG_INFO(return_value.qclass);
+    return_value.valid = false;
+  }
+
+  if (buffer_pointer > data_size) {
+    // We've over-run the returned data.
+    // Something has gone wrong receiving or parseing the data.
+    NS_LOG_INFO(" **ERROR size** ");
+    NS_LOG_INFO(buffer_pointer);
+    NS_LOG_INFO(" ");
+    NS_LOG_INFO(data_size);
+    return_value.valid = false;
+  }
+  return return_value;
+}
+
+Answer MDns::Parse_Answer() {
+  Answer return_value;
+  return_value.buffer_pointer = buffer_pointer;
+
+  buffer_pointer = nameFromDnsPointer(return_value.name_buffer, 0, MAX_MDNS_NAME_LEN, data_buffer, buffer_pointer);
+
+  return_value.rrtype = (data_buffer[buffer_pointer++] << 8) + data_buffer[buffer_pointer++];
+
+  uint8_t rrclass_0 = data_buffer[buffer_pointer++];
+  uint8_t rrclass_1 = data_buffer[buffer_pointer++];
+  return_value.rrset = (0b10000000 & rrclass_0);
+  return_value.rrclass = ((rrclass_0 & 0b01111111) << 8) + rrclass_1;
+
+  return_value.rrttl = (data_buffer[buffer_pointer++] << 24) +
+                       (data_buffer[buffer_pointer++] << 16) +
+                       (data_buffer[buffer_pointer++] << 8) +
+                       data_buffer[buffer_pointer++];
+
+  PopulateAnswerResult(&return_value);
+
+  return_value.valid = true;
+  if (buffer_pointer > data_size) {
+    // We've over-run the returned data.
+    // Something has gone wrong receiving or parseing the data.
+    NS_LOG_INFO(" **ERROR size** ");
+    NS_LOG_INFO(buffer_pointer);
+    NS_LOG_INFO(" ");
+    NS_LOG_INFO(data_size);
+    return_value.valid = false;
+  }
+  return return_value;
+}
+
+int MDns::nameFromDnsPointer(char* p_name_buffer, int name_buffer_pos, const int name_buffer_len,
+                       const uint8_t* p_packet_buffer, int packet_buffer_pos, const bool recurse){
+  if (recurse) {
+    // Since we are adding more to an already populated buffer,
+    // replace the trailing EOL with the FQDN seperator.
+    name_buffer_pos--;
+    writeToBuffer('.', p_name_buffer, &name_buffer_pos, name_buffer_len);
+  }
+
+  if (*(p_packet_buffer + packet_buffer_pos) < 0xC0) {
+    // Since the first 2 bits are not set,
+    // this is the start of a name section.
+    // http://www.tcpipguide.com/free/t_DNSNameNotationandMessageCompressionTechnique.htm
+
+    const int word_len = *(p_packet_buffer + packet_buffer_pos++);
+    for (int l = 0; l < word_len; l++) {
+      writeToBuffer(*(p_packet_buffer + packet_buffer_pos++), p_name_buffer, &name_buffer_pos, name_buffer_len);
+    }
+
+    writeToBuffer('\0', p_name_buffer, &name_buffer_pos, name_buffer_len);
+
+    if (*(p_packet_buffer + packet_buffer_pos) > 0) {
+      // Next word.
+      packet_buffer_pos =
+        nameFromDnsPointer(p_name_buffer, name_buffer_pos, name_buffer_len, p_packet_buffer, packet_buffer_pos, true);
+    } else {
+      // End of string.
+      packet_buffer_pos++;
+    }
+  } else {
+    // Message Compression used. Next 2 bytes are a pointer to the actual name section.
+    int pointer = (*(p_packet_buffer + packet_buffer_pos++) - 0xC0) << 8;
+    pointer += *(p_packet_buffer + packet_buffer_pos++);
+    nameFromDnsPointer(p_name_buffer, name_buffer_pos, name_buffer_len, p_packet_buffer, pointer, false);
+  }
+  return packet_buffer_pos;
+}
+
+bool MDns::writeToBuffer(const uint8_t value, char* p_name_buffer, int* p_name_buffer_pos, const int name_buffer_len) {
+  if (*p_name_buffer_pos < name_buffer_len - 1) {
+    *(p_name_buffer + *p_name_buffer_pos) = value;
+    (*p_name_buffer_pos)++;
+    *(p_name_buffer + *p_name_buffer_pos) = '\0';
+    return true;
+  }
+  (*p_name_buffer_pos)++;
+  return false;
+}
+
+int MDns::nameFromDnsPointer(char* p_name_buffer, int name_buffer_pos, const int name_buffer_len,
+                       const uint8_t* p_packet_buffer, int packet_buffer_pos) {
+  return nameFromDnsPointer(p_name_buffer, name_buffer_pos, name_buffer_len, p_packet_buffer, packet_buffer_pos, false);
+}
+
+void MDns::PopulateAnswerResult(Answer* answer) {
+  int rdlength = (data_buffer[buffer_pointer++] << 8) + data_buffer[buffer_pointer++];
+
+  switch (answer->rrtype) {
+    case MDNS_TYPE_A:  // Returns a 32-bit IPv4 address
+      if (MAX_MDNS_NAME_LEN >= 16) {
+        sprintf(answer->rdata_buffer, "%u.%u.%u.%u",
+                data_buffer[buffer_pointer++], data_buffer[buffer_pointer++],
+                data_buffer[buffer_pointer++], data_buffer[buffer_pointer++]);
+      } else {
+        sprintf(answer->rdata_buffer, "ipv4");
+        buffer_pointer += 4;
+      }
+      break;
+    case MDNS_TYPE_PTR:  // Pointer to a canonical name.
+      buffer_pointer = nameFromDnsPointer(answer->rdata_buffer, 0, MAX_MDNS_NAME_LEN,
+                                          data_buffer, buffer_pointer);
+      break;
+    case MDNS_TYPE_HINFO:  // HINFO. host information
+      buffer_pointer = parseText(answer->rdata_buffer, MAX_MDNS_NAME_LEN, rdlength,
+                                 data_buffer, buffer_pointer);
+      break;
+    case MDNS_TYPE_TXT:  // Originally for arbitrary human-readable text in a DNS record.
+      // We only return the first MAX_MDNS_NAME_LEN bytes of thir record type.
+      buffer_pointer = parseText(answer->rdata_buffer, MAX_MDNS_NAME_LEN, rdlength,
+                                 data_buffer, buffer_pointer);
+      break;
+    case MDNS_TYPE_AAAA:  // Returns a 128-bit IPv6 address.
+      {
+        int buffer_pos = 0;
+        for (int i = 0; i < rdlength; i++) {
+          if (buffer_pos < MAX_MDNS_NAME_LEN - 3) {
+            sprintf(answer->rdata_buffer + buffer_pos, "%02X:", data_buffer[buffer_pointer++]);
+          } else {
+            buffer_pointer++;
+          }
+          buffer_pos += 3;
+        }
+        answer->rdata_buffer[--buffer_pos] = '\0';  // Remove trailing ':'
+      }
+      break;
+    case MDNS_TYPE_SRV:  // Server Selection.
+      {
+        const unsigned int priority = (data_buffer[buffer_pointer++] << 8) + data_buffer[buffer_pointer++];
+        const unsigned int weight = (data_buffer[buffer_pointer++] << 8) + data_buffer[buffer_pointer++];
+        const unsigned int port = (data_buffer[buffer_pointer++] << 8) + data_buffer[buffer_pointer++];
+        sprintf(answer->rdata_buffer, "p=%u;w=%u;port=%u;host=", priority, weight, port);
+
+        buffer_pointer = nameFromDnsPointer(answer->rdata_buffer, strlen(answer->rdata_buffer),
+            MAX_MDNS_NAME_LEN - strlen(answer->rdata_buffer) -1, data_buffer, buffer_pointer);
+      }
+      break;
+    default:
+      {
+        int buffer_pos = 0;
+        for (int i = 0; i < rdlength; i++) {
+          if (buffer_pos < MAX_MDNS_NAME_LEN - 3) {
+            sprintf(answer->rdata_buffer + buffer_pos, "%02X ", data_buffer[buffer_pointer++]);
+          } else {
+            buffer_pointer++;
+          }
+          buffer_pos += 3;
+        }
+      }
+      break;
+  }
+}
+
+int MDns::parseText(char* data_buffer, const int data_buffer_len, const int data_len,
+              const uint8_t* p_packet_buffer, int packet_buffer_pos) {
+  int i, data_buffer_pos = 0;
+  for (i = 0; i < data_len; i++) {
+    writeToBuffer(p_packet_buffer[packet_buffer_pos++], data_buffer, &data_buffer_pos, data_buffer_len);
+  }
+  data_buffer[data_buffer_pos] = '\0';
+  return packet_buffer_pos;
+}

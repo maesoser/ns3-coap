@@ -71,11 +71,15 @@ class MDns {
   //void DisplayRawPacket() const;
 
  private:
-  //struct Query Parse_Query();
-  //struct Answer Parse_Answer();
+  struct Query Parse_Query();
+  struct Answer Parse_Answer();
   unsigned int PopulateName(const char* name_buffer);
-  //void PopulateAnswerResult(Answer* answer);
+  void PopulateAnswerResult(Answer* answer);
 
+  bool writeToBuffer(const uint8_t value, char* p_name_buffer, int* p_name_buffer_pos, const int name_buffer_len);
+  int nameFromDnsPointer(char* p_name_buffer, int name_buffer_pos, const int name_buffer_len,const uint8_t* p_packet_buffer, int packet_buffer_pos, const bool recurse);
+  int nameFromDnsPointer(char* p_name_buffer, int name_buffer_pos, const int name_buffer_len,const uint8_t* p_packet_buffer, int packet_buffer_pos);
+  int parseText(char* data_buffer, const int data_buffer_len, const int data_len,const uint8_t* p_packet_buffer, int packet_buffer_pos);
 
   unsigned int data_size;  // Size of mDNS packet.
   unsigned int buffer_pointer;  // Position in data_buffer while processing packet.
