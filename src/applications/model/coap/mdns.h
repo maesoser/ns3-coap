@@ -48,8 +48,7 @@ class MDns {
  public:
 
   // Call this regularly to check for an incoming packet.
-  //bool Check();
-
+  bool recvdns(Ptr<Socket> socket);
   // Send this MDns packet.
   //void Send() const;
 
@@ -71,6 +70,7 @@ class MDns {
   //void DisplayRawPacket() const;
 
  private:
+
   struct Query Parse_Query();
   struct Answer Parse_Answer();
   unsigned int PopulateName(const char* name_buffer);

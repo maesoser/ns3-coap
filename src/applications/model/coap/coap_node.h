@@ -174,6 +174,7 @@ class CoapNode : public Application{
 			void SchedulePurgeCache (uint32_t deltime);
 
 			// RECEIVE THINGS
+			void HandleDns(Ptr<Socket> socket);
 			void HandleRead (Ptr<Socket> socket);
 			int parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf, size_t buflen);
 			bool recvDtg(Ptr<Socket> socket);
@@ -259,7 +260,8 @@ class CoapNode : public Application{
 			uint8_t *m_data; //!< packet payload data
 			Ptr<Socket> m_socket; //!< IPv4 Socket
 			Ptr<Socket> m_socket6; //!< IPv6 Socket
-			Ptr<Socket> m_dnssock;
+			Ptr<Socket> m_dnssocket;
+
 			Address m_local; //!< local multicast address
 
 			Ipv4Address m_mcastAddr;

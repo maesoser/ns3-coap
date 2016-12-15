@@ -347,3 +347,64 @@ int MDns::parseText(char* data_buffer, const int data_buffer_len, const int data
   data_buffer[data_buffer_pos] = '\0';
   return packet_buffer_pos;
 }
+
+
+bool MDns::recvdns(Ptr<Socket> socket) {
+
+  Address from;
+  Ptr<Packet> dnspacket;
+
+  while ((dnspacket = socket->RecvFrom (from))) {
+	 data_size = dnspacket->GetSize ();
+
+     if(data_size > MAX_PACKET_SIZE) {
+      // Incoming data will not fit in buffer.
+      // TODO: read the packet in sections so we can use a smaller buffer.
+      // Non zero Response code implies error.
+      return false;
+    }
+
+    dnspacket->CopyData(data_buffer,  data_size); // read the packet into the buffer
+
+    // data_buffer[0] and data_buffer[1] contain the Query ID field which is unused in mDNS.
+
+    // data_buffer[2] and data_buffer[3] are DNS flags which are mostly unused in mDNS.
+    type = !(data_buffer[2] & 0b10000000);  // If it's not a query, it's an answer.
+    truncated = data_buffer[2] & 0b00000010;  // If it's truncated we can expect more data soon so we should wait for additional recods before deciding whether to respond.
+    if (data_buffer[3] & 0b00001111) {
+      // Non zero Response code implies error.
+      return false;
+    }
+
+    query_count = (data_buffer[4] << 8) + data_buffer[5];	    // Number of incoming queries.
+    answer_count = (data_buffer[6] << 8) + data_buffer[7];	    // Number of incoming answers.
+    ns_count = (data_buffer[8] << 8) + data_buffer[9];	    // Number of incoming Name Server resource records.
+    ar_count = (data_buffer[10] << 8) + data_buffer[11];	    // Number of incoming Additional resource records.
+    /*if(p_packet_function_) {
+      p_packet_function_(this);	      // Since a callback function has been registered, execute it.
+    }*/
+    // Start of Data section.
+    buffer_pointer = 12;
+    for (uint32_t i_question = 0; i_question < query_count; i_question++) {
+      const Query query = Parse_Query();
+      if (query.valid) {
+        /*if (p_query_function_) {
+          // Since a callback function has been registered, execute it.
+          p_query_function_(&query);
+        }*/
+      }
+    }
+
+    for (uint32_t i_answer = 0; i_answer < (answer_count + ns_count + ar_count); i_answer++) {
+      const Answer answer = Parse_Answer();
+      if (answer.valid) {
+        /*if (p_answer_function_) {
+          // Since a callback function has been registered, execute it.
+          p_answer_function_(&answer);
+        }*/
+      }
+    }
+    return true;
+  }
+  return false;
+}

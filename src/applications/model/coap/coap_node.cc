@@ -134,9 +134,29 @@ void CoapNode::StartApplication (void){
         }
     }
 
+    TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
+    m_dnssocket = Socket::CreateSocket (GetNode(), tid);
+    InetSocketAddress local = InetSocketAddress (Ipv4Address::GetAny (), MDNS_SOURCE_PORT);
+    m_dnssocket->Bind (local);
+    if (addressUtils::IsMulticast (m_local)){
+        NS_LOG_INFO ("Joining mcast group...");
+        Ptr<UdpSocket> udpSocket = DynamicCast<UdpSocket> (m_dnssocket);
+        if (udpSocket)
+          {
+            // equivalent to setsockopt (MCAST_JOIN_GROUP)
+            udpSocket->MulticastJoinGroup (0, m_local);
+          }
+        else
+          {
+            NS_FATAL_ERROR ("Error: Failed to join multicast group");
+          }
+      }
+      m_dnssocket->SetAllowBroadcast(true);
+
   m_socket->SetAllowBroadcast (true);
   m_socket->SetRecvCallback (MakeCallback (&CoapNode::HandleRead, this));
   m_socket6->SetRecvCallback (MakeCallback (&CoapNode::HandleRead, this));
+  m_dnssocket->SetRecvCallback(MakeCallback(&CoapNode::HandleDns,this));
   //ScheduleTransmit (Seconds (0.));
   if(m_ageTime!=0){
   }
@@ -179,7 +199,10 @@ void CoapNode::HandleRead (Ptr<Socket> socket) {
 }
 
 
+void CoapNode::HandleDns(Ptr<Socket> socket){
+  NS_LOG_FUNCTION(this << socket);
 
+}
 /*
  * It Schedules the transmission of the next packet request for discovery of the actual network
  */
