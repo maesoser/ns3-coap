@@ -33,28 +33,23 @@ TypeId CoapNode::GetTypeId (void){
                    UintegerValue (COAP_DEFAULT_PORT),
                    MakeUintegerAccessor (&CoapNode::m_port),
                    MakeUintegerChecker<uint16_t> ())
-    .AddAttribute ("multicastResponse",
-                  "Should I answer in multicast mode?",
+    .AddAttribute ("multicastResponse","Should I answer in multicast mode?",
                   UintegerValue (0),
                   MakeUintegerAccessor (&CoapNode::m_answType),
                   MakeUintegerChecker<uint16_t> ())
-    .AddAttribute ("startDelay",
-                   "Delay when you start the app",
+    .AddAttribute ("startDelay","Delay when you start the app",
                    UintegerValue (30),
                    MakeUintegerAccessor (&CoapNode::m_startDelay),
                    MakeUintegerChecker<uint32_t>())
-    .AddAttribute ("interval",
-                   "The time to wait between packets. If it is 0-> Server Mode.",
+    .AddAttribute ("interval","The time to wait between packets. If it is 0-> Server Mode.",
                    TimeValue (Seconds (90.0)),
                    MakeTimeAccessor (&CoapNode::m_interval),
                    MakeTimeChecker ())
-     .AddAttribute ("nPackets",
-                   "The maximum number of packets the application will send",
+     .AddAttribute ("nPackets","The maximum number of packets the application will send",
                    UintegerValue (0),
                    MakeUintegerAccessor (&CoapNode::m_count),
                    MakeUintegerChecker<uint32_t> ())
-    .AddAttribute ("cache",
-                   "Size of our cache. If it is 0, cache is deactivated.",
+    .AddAttribute ("cache","Size of our cache. If it is 0, cache is deactivated.",
                    UintegerValue (30),
                    MakeUintegerAccessor (&CoapNode::m_cachesize),
                    MakeUintegerChecker<uint16_t> ())

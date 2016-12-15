@@ -161,6 +161,9 @@ int main (int argc, char *argv[])
 
   uint32_t numNodes = 25;  // by default, 5x5
 
+  uint32_t interval = 60;
+  uint32_t maxAge = 90;
+
   // Direct sequence spread spectrum
 	std::string phyMode ("DsssRate1Mbps");
   // Assigned coAP multicat group
@@ -193,7 +196,11 @@ int main (int argc, char *argv[])
   cmd.AddValue("txcurrent","Current consumed when transmitting (A)",txCurrent);
   cmd.AddValue("routing","Current routing protocol 0=NONE,1=OLSR,2=SMF-AODV,3=SMF-DSDV,4=DSR 5=SMF-OLSR",protocol);
   cmd.AddValue("verbose","Verbosity level 0=ENERGY, 1=LINK, 2=WIFI",verbose);
+  cmd.AddValue("interval","The time to wait between packets. If it is 0-> Server Mode.",interval)
+  cmd.AddValue("maxAge","Delete items after max-Age? If >0 it is the age given to the services",maxAge);
   cmd.Parse (argc, argv);
+
+
 
   // This is not properly written, infact when you put 0, it also prints the
   // power info.
@@ -380,10 +387,10 @@ LogComponentEnable("smfLog",LOG_LEVEL_ALL);
 
   CoapNodeHelper coapnode(5683);
   coapnode.SetAttribute ("startDelay",UintegerValue (60));
-  coapnode.SetAttribute ("interval", TimeValue (Seconds (60)));
+  coapnode.SetAttribute ("interval", TimeValue (Seconds (interval)));
   coapnode.SetAttribute ("multicastResponse", UintegerValue (1));
   coapnode.SetAttribute ("cache", UintegerValue (24));
-  coapnode.SetAttribute ("useMaxAge",UintegerValue (60));
+  coapnode.SetAttribute ("useMaxAge",UintegerValue (maxAge));
   apps = coapnode.Install(nodes);
   apps.Start (Seconds (0.0));
   apps.Stop (Seconds (1000.0));
