@@ -9,6 +9,16 @@
 src/*
 !src/smf
 !src/smf/*
+!src/smf/doc
+!src/smf/doc/*
+!src/smf/examples
+!src/smf/examples/*
+!src/smf/helper
+!src/smf/helper/*
+!src/smf/model
+!src/smf/model/*
+!src/smf/test
+!src/smf/test/*
 !src/applications
 !src/applications/*
 !src/applications/bindings
