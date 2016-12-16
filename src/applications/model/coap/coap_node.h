@@ -51,6 +51,8 @@
 #include "mdns.h"
 
 #define COAP_MCAST_ADDR "224.0.1.187"
+#define MDNS_MCAST_ADDR "224.0.0.251"
+
 #define NEW_DTG_ID 0
 
 #define CONF_WAIT_REPL 3

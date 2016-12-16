@@ -50,7 +50,7 @@ class MDns {
   // Call this regularly to check for an incoming packet.
   bool recvdns(Ptr<Socket> socket);
   // Send this MDns packet.
-  //void Send() const;
+void Send(Ptr<Socket> sockt,Ipv4Address addrs,	TracedCallback<Ptr<const Packet> > tracer) const;
 
   // Resets everything to reperesent an empty packet.
   // Do this before building a packet for sending.

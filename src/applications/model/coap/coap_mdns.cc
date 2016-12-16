@@ -408,3 +408,14 @@ bool MDns::recvdns(Ptr<Socket> socket) {
   }
   return false;
 }
+
+void MDns::Send(Ptr<Socket> sockt,Ipv4Address addrs,	TracedCallback<Ptr<const Packet> > tracer) const {
+  Ptr<Packet> udp_p;
+  udp_p = Create<Packet> ((uint8_t *)data_buffer, data_size);
+  udp_p->RemoveAllPacketTags ();
+  udp_p->RemoveAllByteTags ();
+
+  tracer(udp_p);
+
+  sockt->SendTo(udp_p,0,InetSocketAddress(Ipv4Address::ConvertFrom(addrs), MDNS_TARGET_PORT));
+}
