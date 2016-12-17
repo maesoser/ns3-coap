@@ -51,7 +51,7 @@
 #include "mdns.h"
 
 #define COAP_MCAST_ADDR "224.0.1.187"
-#define MDNS_MCAST_ADDR "224.0.0.251"
+#define MDNS_MCAST_ADDR "224.0.1.251" // CORRECT ADDR is 224.0.0.251
 
 #define NEW_DTG_ID 0
 
@@ -166,6 +166,8 @@ class CoapNode : public Application{
 			CoapNode ();
 			virtual ~CoapNode ();
 			static TypeId GetTypeId (void);
+			Ipv4Address GetAddr();
+
 		protected:
 			virtual void DoDispose (void);
 		private:
@@ -200,6 +202,7 @@ class CoapNode : public Application{
 			uint16_t sendResponse(Ipv4Address ip, int port, uint16_t messageid, char *payload);
 			uint16_t sendResponse(Ipv4Address ip, int port, uint16_t messageid, char *payload, int payloadlen);
 			uint16_t sendResponse(Ipv4Address ip, int port, uint16_t messageid, char *payload, int payloadlen,COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, uint8_t *token, int tokenlen);
+			void sendmDnsRequest();
 
 			// CACHE STUFF
 			int GetEntryIndex(size_t nodeid);
@@ -227,9 +230,6 @@ class CoapNode : public Application{
 
 			void split( std::string &s, char delim, std::vector<std::string> &elems);
 			std::vector<std::string> split( std::string &s, char delim);
-			Ipv4Address GetAddr();
-
-
 
 			void checkCache();
 
@@ -273,7 +273,7 @@ class CoapNode : public Application{
 
 			TracedCallback<Ptr<const Packet> > m_txTrace;     /// Callbacks for tracing the packet Tx events
 
-			// VARIABLES USADAS PARA EL RESUMEN
+			uint32_t m_activatemDns = 0;
 
 	}; // Class coapNode
 

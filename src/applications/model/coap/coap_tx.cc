@@ -126,6 +126,7 @@ void CoapNode::sendCachePart(Ipv4Address ip, int port, uint16_t messageid,std::s
 void CoapNode::SendPing(Ipv4Address ip, int port){
   sendCoap(ip, port, NULL, COAP_CON, COAP_NULL, NULL, 0, NULL, 0);
 }
+
 void CoapNode::SendDiscovery(){
   char* discostr = "well-known/core";
   get(m_mcastAddr,m_port,discostr);
@@ -142,6 +143,48 @@ uint16_t CoapNode::put(Ipv4Address ip, int port, char *url, char *payload) {
 
 uint16_t CoapNode::put(Ipv4Address ip, int port, char *url, char *payload, int payloadlen) {
     return sendCoap(ip, port, url, COAP_CON, COAP_PUT, NULL, 0, (uint8_t *)payload, payloadlen);
+}
+
+void CoapNode::sendmDnsRequest(){
+   MDns my_mdns;
+   my_mdns.Clear();
+   struct Query query_mqtt;
+   strncpy(query_mqtt.qname_buffer,  "_mqtt._tcp.local", MAX_MDNS_NAME_LEN);
+   query_mqtt.qtype = MDNS_TYPE_PTR;
+   query_mqtt.qclass = 1;    // "INternet"
+   query_mqtt.unicast_response = 0;
+   my_mdns.AddQuery(query_mqtt);
+   Ipv4Address dnsmcast(MDNS_MCAST_ADDR);
+   //my_mdns.Send(m_dnssocket,dnsmcast,m_txTrace);
+
+   Ptr<Packet> udp_p;
+   udp_p = Create<Packet> ((uint8_t *)my_mdns.data_buffer, my_mdns.data_size);
+   udp_p->RemoveAllPacketTags ();
+   udp_p->RemoveAllByteTags ();
+
+   m_txTrace(udp_p);
+
+   m_dnssocket->SendTo(udp_p,0,InetSocketAddress(Ipv4Address::ConvertFrom(dnsmcast), MDNS_TARGET_PORT));
+
+   if (Ipv4Address::IsMatchingType (dnsmcast))
+     {
+       NS_LOG_INFO (Simulator::Now ().GetSeconds () << "s "<< GetAddr() <<" send " << my_mdns.data_size << " bytes to " << Ipv4Address::ConvertFrom (dnsmcast) << ":" << MDNS_MCAST_ADDR);
+     }
+   else if (Ipv6Address::IsMatchingType (dnsmcast))
+     {
+       NS_LOG_INFO (Simulator::Now ().GetSeconds () << "s send " << my_mdns.data_size << " bytes to " << Ipv6Address::ConvertFrom (dnsmcast) << ":" << MDNS_MCAST_ADDR);
+     }
+   else if (InetSocketAddress::IsMatchingType (dnsmcast))
+     {
+       NS_LOG_INFO (Simulator::Now ().GetSeconds () << "s send " << my_mdns.data_size << " bytes to " << InetSocketAddress::ConvertFrom (dnsmcast).GetIpv4 () << ":" << InetSocketAddress::ConvertFrom (dnsmcast).GetPort ());
+     }
+   else if (Inet6SocketAddress::IsMatchingType (dnsmcast))
+     {
+       NS_LOG_INFO (Simulator::Now ().GetSeconds () << "s send " << my_mdns.data_size << " bytes to " << Inet6SocketAddress::ConvertFrom (dnsmcast).GetIpv6 () << ":" << Inet6SocketAddress::ConvertFrom (dnsmcast).GetPort ());
+     }
+
+     if(m_interval!=0) ScheduleTransmit(m_interval);
+
 }
 
 uint16_t CoapNode::sendDtg(CoapPacket &packet, Ipv4Address ip, int port) {

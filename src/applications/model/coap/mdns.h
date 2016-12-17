@@ -25,8 +25,6 @@ typedef struct Query{
   unsigned int qclass;                    // Question Class: Normally the value 1 for Internet (“IN”)
   bool unicast_response;                  //
   bool valid;                             // False if problems were encountered decoding packet.
-
-  void Display() const;                   // Display a summary of this Answer on Serial port.
 } Query;
 
 // A single mDNS Answer.
@@ -40,13 +38,14 @@ typedef struct Answer{
   bool rrset;                           // Flush cache of records matching this name.
   bool valid;                           // False if problems were encountered decoding packet.
 
-  void Display() const ;                // Display a summary of this Answer on Serial port.
 } Answer;
 
 
 class MDns {
  public:
-
+   unsigned int data_size;  // Size of mDNS packet.
+   unsigned int buffer_pointer;  // Position in data_buffer while processing packet.
+   uint8_t data_buffer[MAX_PACKET_SIZE];  // Buffer containing mDNS packet.
   // Call this regularly to check for an incoming packet.
   bool recvdns(Ptr<Socket> socket);
   // Send this MDns packet.
@@ -81,9 +80,7 @@ void Send(Ptr<Socket> sockt,Ipv4Address addrs,	TracedCallback<Ptr<const Packet> 
   int nameFromDnsPointer(char* p_name_buffer, int name_buffer_pos, const int name_buffer_len,const uint8_t* p_packet_buffer, int packet_buffer_pos);
   int parseText(char* data_buffer, const int data_buffer_len, const int data_len,const uint8_t* p_packet_buffer, int packet_buffer_pos);
 
-  unsigned int data_size;  // Size of mDNS packet.
-  unsigned int buffer_pointer;  // Position in data_buffer while processing packet.
-  uint8_t data_buffer[MAX_PACKET_SIZE];  // Buffer containing mDNS packet.
+
   bool type;  // Query or Answer
   bool truncated;  // Whether more follows in another packet.
   unsigned int query_count;  // Number of Qeries in the packet.

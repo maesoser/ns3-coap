@@ -134,6 +134,7 @@ NS_LOG_COMPONENT_DEFINE ("smfLog");
             }
             return 0;
         }
+
         void RoutingProtocol::Clean() {
             NS_LOG_DEBUG ("ERASING HASH TABLE");
             v.erase(v.begin(), v.begin()+(v.size() / 3));
@@ -173,6 +174,16 @@ NS_LOG_COMPONENT_DEFINE ("smfLog");
             if(checkhash(p,origin)){ // If it is NEW
               uint32_t nodeid = m_ipv4->GetObject<Node>()->GetId();
               if(dst.IsMulticast()){
+                Ptr<Ipv4MulticastRoute> mrtentry = new Ipv4MulticastRoute();
+                mrtentry->SetGroup(dst);
+                mrtentry->SetOrigin(origin);
+                mrtentry->SetOutputTtl(outif, outttl-1);
+                mrtentry->SetParent (outif);
+                //NS_LOG_INFO("["<<nodeid<<"] FORWARD from " << mrtentry->GetOrigin() << " to "<< mrtentry->GetGroup()<< " via "<< outif << " TTL:"<< unsigned(outttl)-1);
+                NS_LOG_INFO(Simulator::Now ().GetSeconds () <<" node "<<getMainLocalAddr()<<" FORWARD from " << mrtentry->GetOrigin() << " to "<< mrtentry->GetGroup()<< " via "<< outif << " TTL:"<< unsigned(outttl)-1);
+                mcb(mrtentry, p, header);
+                return true;
+              }else if(dst.IsLocalMulticast ()){
                 Ptr<Ipv4MulticastRoute> mrtentry = new Ipv4MulticastRoute();
                 mrtentry->SetGroup(dst);
                 mrtentry->SetOrigin(origin);

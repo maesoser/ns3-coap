@@ -57,6 +57,10 @@ TypeId CoapNode::GetTypeId (void){
 					UintegerValue (60),
                   MakeUintegerAccessor (&CoapNode::m_ageTime),
                   MakeUintegerChecker<uint32_t> ())
+    .AddAttribute ("mDNS","If it is 1, coAP uses discovery to detect services.",
+					UintegerValue (0),
+                  MakeUintegerAccessor (&CoapNode::m_activatemDns),
+                  MakeUintegerChecker<uint32_t> ())
     .AddTraceSource ("Tx", "A new packet is created and is sent",
                      MakeTraceSourceAccessor (&CoapNode::m_txTrace),
                      "ns3::Packet::TracedCallback")
@@ -185,7 +189,10 @@ void CoapNode::StopApplication (){
       m_socket6->Close ();
       m_socket6->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
     }
-
+    if (m_dnssocket != 0){
+        m_dnssocket->Close ();
+        m_dnssocket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
+      }
   showResume();
 }
 
@@ -211,11 +218,19 @@ void CoapNode::ScheduleTransmit (Time dt){
     if(m_petitionLimit == true){
       if(m_count!=0){
 		    //m_sendEvent = Simulator::Schedule (dt, &CoapNode::Send, this,COAP_DISCOVERY_GET,NEW_DTG_ID);
-        m_sendEvent = Simulator::Schedule (dt, &CoapNode::SendDiscovery, this);
+        if(m_activatemDns==1){
+          m_sendEvent = Simulator::Schedule (dt, &CoapNode::sendmDnsRequest,this);
+        }else{
+          m_sendEvent = Simulator::Schedule (dt, &CoapNode::SendDiscovery, this);
+        }
 		    m_count = m_count - 1;
 	    }
     }else{
-      m_sendEvent = Simulator::Schedule (dt, &CoapNode::SendDiscovery, this);
+      if(m_activatemDns==1){
+        m_sendEvent = Simulator::Schedule (dt, &CoapNode::sendmDnsRequest,this);
+      }else{
+        m_sendEvent = Simulator::Schedule (dt, &CoapNode::SendDiscovery, this);
+      }
     }
 
 }

@@ -168,14 +168,15 @@ int main (int argc, char *argv[])
 	std::string phyMode ("DsssRate1Mbps");
   // Assigned coAP multicat group
 	Ipv4Address multicastGroup ("224.0.1.187");
+  Ipv4Address mdnsGroup("224.0.0.251");
   Ipv4Address unicastAddr ("10.1.1.23");
   Ipv4Address localBroadcast ("10.1.1.255");
   uint32_t protocol = 0; // switch routing protocol
   std::string m_protocolName; // Store the name of the protocol
   uint32_t verbose = 0;  // switch verbose level
-
+  uint32_t runtime = 3000;
   uint32_t rectangleSize = distance*2*(sqrt(numNodes)-1); // for RandomWalk2dMobilityModel
-
+  uint32_t mDnsOn = 0;
   // Routing Helpers
   smfHelper smf;
   AodvHelper aodv;
@@ -198,6 +199,9 @@ int main (int argc, char *argv[])
   cmd.AddValue("verbose","Verbosity level 0=ENERGY, 1=LINK, 2=WIFI",verbose);
   cmd.AddValue("interval","The time to wait between packets. If it is 0-> Server Mode.",interval);
   cmd.AddValue("maxAge","Delete items after max-Age? If >0 it is the age given to the services",maxAge);
+  cmd.AddValue("runtime","number of seconds the simulatiun will last",runtime);
+  cmd.AddValue("mdns","1=mDNS 0=coAP discovery",mDnsOn);
+
   cmd.Parse (argc, argv);
 
 
@@ -363,8 +367,7 @@ LogComponentEnable("smfLog",LOG_LEVEL_ALL);
 		staticRouting.SetDefaultMulticastRoute(nodes.Get(a),devices.Get(a));
 	}
 
-
-  /*  ESTO YA NO ES NECESARIO XQ
+/*
   for( uint32_t a = 0; a < nodes.GetN(); a = a + 1 )
   {
     Ptr<Node> anode = nodes.Get(a); // Get pointer to ith node in container
@@ -376,7 +379,7 @@ LogComponentEnable("smfLog",LOG_LEVEL_ALL);
       if(a!=b){
         Ptr<Node> mcastRouter = nodes.Get (b);  // The node in question
         Ptr<NetDevice> inputdev = devices.Get (b);  // The input NetDevice
-        staticRouting.AddMulticastRoute (mcastRouter, mcastIpSource, multicastGroup, inputdev, inputdev);
+        staticRouting.AddMulticastRoute (mcastRouter, mcastIpSource, mdnsGroup, inputdev, inputdev);
         NS_LOG_INFO ("\t\t--> " << b );
 
       }
@@ -391,9 +394,14 @@ LogComponentEnable("smfLog",LOG_LEVEL_ALL);
   coapnode.SetAttribute ("multicastResponse", UintegerValue (1));
   coapnode.SetAttribute ("cache", UintegerValue (24));
   coapnode.SetAttribute ("useMaxAge",UintegerValue (maxAge));
+  coapnode.SetAttribute ("mDNS",UintegerValue(mDnsOn));
   apps = coapnode.Install(nodes);
   apps.Start (Seconds (0.0));
-  apps.Stop (Seconds (1000.0));
+  if(runtime>900){
+    apps.Stop (Seconds (runtime - 300));
+  }else{
+    apps.Stop (Seconds (runtime/3));
+  }
 
   /*
   CoapServerHelper coapserver (5683);
@@ -528,7 +536,7 @@ LogComponentEnable("smfLog",LOG_LEVEL_ALL);
 	anim.EnablePacketMetadata (true);
 
   Simulator::ScheduleDestroy (showSummary);
-	Simulator::Stop (Seconds (1200.0));
+	Simulator::Stop (Seconds (runtime));
 	Simulator::Run ();
 	Simulator::Destroy ();
 
