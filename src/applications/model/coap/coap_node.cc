@@ -208,6 +208,8 @@ void CoapNode::HandleRead (Ptr<Socket> socket) {
 
 void CoapNode::HandleDns(Ptr<Socket> socket){
   NS_LOG_FUNCTION(this << socket);
+  MDns my_mdns;
+  my_mdns.recvdns(socket);
 
 }
 /*
