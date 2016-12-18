@@ -208,9 +208,18 @@ void CoapNode::HandleRead (Ptr<Socket> socket) {
 
 void CoapNode::HandleDns(Ptr<Socket> socket){
   NS_LOG_FUNCTION(this << socket);
-  MDns my_mdns;
-  my_mdns.recvdns(socket);
+  Address from;
+  Ptr<Packet> dnspacket;
 
+  while ((dnspacket = socket->RecvFrom (from))) {
+	 uint32_t data_size = dnspacket->GetSize ();
+
+   if (InetSocketAddress::IsMatchingType (from)){
+     NS_LOG_INFO ("DNS "<<Simulator::Now().GetSeconds () <<"s "<< GetAddr() <<" receive " << data_size << " bytes from " << InetSocketAddress::ConvertFrom (from).GetIpv4 () << ":" <<InetSocketAddress::ConvertFrom (from).GetPort ());
+   }
+  MDns my_mdns;
+  my_mdns.recvdns(dnspacket,from);
+}
 }
 /*
  * It Schedules the transmission of the next packet request for discovery of the actual network

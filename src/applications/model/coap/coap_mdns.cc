@@ -349,18 +349,14 @@ int MDns::parseText(char* data_buffer, const int data_buffer_len, const int data
 }
 
 
-bool MDns::recvdns(Ptr<Socket> socket) {
-
-  Address from;
-  Ptr<Packet> dnspacket;
-
-  while ((dnspacket = socket->RecvFrom (from))) {
-	 data_size = dnspacket->GetSize ();
-
+bool MDns::recvdns(Ptr<Packet> dnspacket, Address from) {
+    NS_LOG_INFO("|-> DNS");
+     data_size = dnspacket->GetSize ();
      if(data_size > MAX_PACKET_SIZE) {
       // Incoming data will not fit in buffer.
       // TODO: read the packet in sections so we can use a smaller buffer.
-      // Non zero Response code implies error.
+      // Non zero Response code implies error
+      NS_LOG_INFO("\t|->Incoming data will not fit in buffer.");
       return false;
     }
 
@@ -373,6 +369,7 @@ bool MDns::recvdns(Ptr<Socket> socket) {
     truncated = data_buffer[2] & 0b00000010;  // If it's truncated we can expect more data soon so we should wait for additional recods before deciding whether to respond.
     if (data_buffer[3] & 0b00001111) {
       // Non zero Response code implies error.
+      NS_LOG_INFO("\t|->Non zero Response code implies error");
       return false;
     }
 
@@ -380,6 +377,8 @@ bool MDns::recvdns(Ptr<Socket> socket) {
     answer_count = (data_buffer[6] << 8) + data_buffer[7];	    // Number of incoming answers.
     ns_count = (data_buffer[8] << 8) + data_buffer[9];	    // Number of incoming Name Server resource records.
     ar_count = (data_buffer[10] << 8) + data_buffer[11];	    // Number of incoming Additional resource records.
+    NS_LOG_INFO("\t|-> Q: "<< query_count<<"   A: "<<answer_count<<"   NS: "<<ns_count<<"   ADT: "<<ar_count);
+
     /*if(p_packet_function_) {
       p_packet_function_(this);	      // Since a callback function has been registered, execute it.
     }*/
@@ -388,6 +387,7 @@ bool MDns::recvdns(Ptr<Socket> socket) {
     for (uint32_t i_question = 0; i_question < query_count; i_question++) {
       const Query query = Parse_Query();
       if (query.valid) {
+        NS_LOG_INFO("\t|-> Q: "<< query.qname_buffer);
         /*if (p_query_function_) {
           // Since a callback function has been registered, execute it.
           p_query_function_(&query);
@@ -406,8 +406,6 @@ bool MDns::recvdns(Ptr<Socket> socket) {
     }
     return true;
   }
-  return false;
-}
 
 void MDns::Send(Ptr<Socket> sockt,Ipv4Address addrs,	TracedCallback<Ptr<const Packet> > tracer) const {
   Ptr<Packet> udp_p;

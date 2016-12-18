@@ -47,7 +47,7 @@ class MDns {
    unsigned int buffer_pointer;  // Position in data_buffer while processing packet.
    uint8_t data_buffer[MAX_PACKET_SIZE];  // Buffer containing mDNS packet.
   // Call this regularly to check for an incoming packet.
-  bool recvdns(Ptr<Socket> socket);
+bool recvdns(Ptr<Packet> dnspacket, Address from);
   // Send this MDns packet.
 void Send(Ptr<Socket> sockt,Ipv4Address addrs,	TracedCallback<Ptr<const Packet> > tracer) const;
 

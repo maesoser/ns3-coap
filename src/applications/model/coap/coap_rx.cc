@@ -20,7 +20,7 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
         NS_LOG_INFO (Simulator::Now ().GetSeconds () <<"s "<< GetAddr() <<" receive " << packetlen << " bytes from " << InetSocketAddress::ConvertFrom (from).GetIpv4 () << ":" <<InetSocketAddress::ConvertFrom (from).GetPort ());
       }
       else if (Inet6SocketAddress::IsMatchingType (from)){
-        NS_LOG_INFO ("At time " << Simulator::Now ().GetSeconds () << "s receive " << packetlen << " bytes from " << Inet6SocketAddress::ConvertFrom (from).GetIpv6 () << ":" << Inet6SocketAddress::ConvertFrom (from).GetPort ());
+        NS_LOG_INFO (Simulator::Now ().GetSeconds () << "s receive " << packetlen << " bytes from " << Inet6SocketAddress::ConvertFrom (from).GetIpv6 () << ":" << Inet6SocketAddress::ConvertFrom (from).GetPort ());
       }
       dtgpacket->CopyData(buffer,  packetlen >= BUF_MAX_SIZE ? BUF_MAX_SIZE : packetlen);
       CoapPacket packet;
