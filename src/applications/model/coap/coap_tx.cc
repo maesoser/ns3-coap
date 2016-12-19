@@ -67,8 +67,12 @@ uint16_t CoapNode::sendCoap(Ipv4Address ip, int port, char *url, COAP_TYPE type,
     packet.messageid = rand();
 
     // if more options?
-    packet.options[packet.optionnum].buffer = (uint8_t *) url;
-    packet.options[packet.optionnum].length = strlen(url);
+    if(url){
+      packet.options[packet.optionnum].buffer = (uint8_t *) url;
+      packet.options[packet.optionnum].length = strlen(url);
+    }else{
+      packet.options[packet.optionnum].length = 0;
+    }
     packet.options[packet.optionnum].number = COAP_URI_PATH;
     packet.optionnum++;
 
@@ -123,7 +127,7 @@ void CoapNode::sendCachePart(Ipv4Address ip, int port, uint16_t messageid,std::s
   sendDtg(packet, ip, port);
 }
 
-void CoapNode::SendPing(Ipv4Address ip, int port){
+void CoapNode::ping(Ipv4Address ip, int port){
   sendCoap(ip, port, NULL, COAP_CON, COAP_NULL, NULL, 0, NULL, 0);
 }
 

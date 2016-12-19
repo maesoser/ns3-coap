@@ -195,7 +195,7 @@ class CoapNode : public Application{
 			//Deal wioth the scheduling thing and all that stuff
 			void SendDiscovery();
 			void sendCache(Ipv4Address ip, int port, uint16_t messageid);
-			void SendPing(Ipv4Address ip, int port);
+			void ping(Ipv4Address ip, int port);
 			void sendCachePart(Ipv4Address ip, int port, uint16_t messageid,std::string payloadstr);
 			// Send responses (Taking care of messageid and changing some other things)
 			uint16_t sendResponse(Ipv4Address ip, int port, uint16_t messageid);

@@ -95,9 +95,11 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
                 std::string vser = split(vname,'/')[1];
                 NS_LOG_INFO("\t|-> URL: "<<sip<<" Service:"<< vser);
                 addEntry(sip,vser,recvAge);
+                ping(sip,COAP_DEFAULT_PORT);
               }else{
                 NS_LOG_INFO("\t|-> URL: Localhost Service:"<< vname);
                 addEntry( InetSocketAddress::ConvertFrom (from).GetIpv4(),vname,recvAge);
+                ping(InetSocketAddress::ConvertFrom (from).GetIpv4(),COAP_DEFAULT_PORT);
               }
             }
           }
@@ -130,7 +132,8 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
 			      addID(packet.messageid,m_sendDiscoResponse);
           }
       }
-      else if(packet.type == COAP_CON && packet.code == 0x00){    // Answer to a ack
+      else if(packet.type == COAP_CON && packet.code == 0x00){    // Answer to an ack
+        NS_LOG_INFO("\t|-> RECV ACK "<<packet.messageid);
           CoapPacket rstack;
           rstack.type = COAP_RESET;
           rstack.code = 0;
@@ -145,7 +148,7 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
           return sendDtg(rstack, InetSocketAddress::ConvertFrom (from).GetIpv4(), InetSocketAddress::ConvertFrom (from).GetPort());
       }
       else if(packet.type == COAP_RESET){
-        NS_LOG_INFO("Received RST (ACK ANSWER)");
+        NS_LOG_INFO("\t|-> RECV RST (ACK ANSWER)"<<packet.messageid);
       }
   }
   return true;
