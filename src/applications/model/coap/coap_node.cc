@@ -61,6 +61,10 @@ TypeId CoapNode::GetTypeId (void){
 					UintegerValue (0),
                   MakeUintegerAccessor (&CoapNode::m_activatemDns),
                   MakeUintegerChecker<uint32_t> ())
+	.AddAttribute ("ping","If it is 1, coAP send a ping every time it receives a cache entry.",
+					UintegerValue (0),
+					MakeUintegerAccessor (&CoapNode::m_activatePing),
+					MakeUintegerChecker<uint32_t> ())
     .AddTraceSource ("Tx", "A new packet is created and is sent",
                      MakeTraceSourceAccessor (&CoapNode::m_txTrace),
                      "ns3::Packet::TracedCallback")

@@ -177,6 +177,7 @@ int main (int argc, char *argv[])
   uint32_t runtime = 3000;
   uint32_t rectangleSize = distance*2*(sqrt(numNodes)-1); // for RandomWalk2dMobilityModel
   uint32_t mDnsOn = 0;
+  uint32_t pingopt = 0;
   // Routing Helpers
   smfHelper smf;
   AodvHelper aodv;
@@ -201,6 +202,7 @@ int main (int argc, char *argv[])
   cmd.AddValue("maxAge","Delete items after max-Age? If >0 it is the age given to the services",maxAge);
   cmd.AddValue("runtime","number of seconds the simulatiun will last",runtime);
   cmd.AddValue("mdns","1=mDNS 0=coAP discovery",mDnsOn);
+  cmd.AddValue("ping","1=ping on 0=cping off",pingopt);
 
   cmd.Parse (argc, argv);
 
@@ -395,6 +397,7 @@ LogComponentEnable("smfLog",LOG_LEVEL_ALL);
   coapnode.SetAttribute ("cache", UintegerValue (24));
   coapnode.SetAttribute ("useMaxAge",UintegerValue (maxAge));
   coapnode.SetAttribute ("mDNS",UintegerValue(mDnsOn));
+  coapnode.SetAttribute ("ping",UintegerValue(pingopt));
   apps = coapnode.Install(nodes);
   apps.Start (Seconds (0.0));
   if(runtime>900){

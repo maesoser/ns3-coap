@@ -274,6 +274,7 @@ class CoapNode : public Application{
 			TracedCallback<Ptr<const Packet> > m_txTrace;     /// Callbacks for tracing the packet Tx events
 
 			uint32_t m_activatemDns = 0;
+                        uint32_t m_activatePing = 0;
 
 	}; // Class coapNode
 
