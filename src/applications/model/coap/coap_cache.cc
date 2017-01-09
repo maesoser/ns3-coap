@@ -87,7 +87,7 @@ size_t CoapNode::getOldestEntry(){
 }
 
 void CoapNode::showCache(){
-  //checkCache();
+  checkCache();
   deleteOutdated();
 	if(!m_cache.empty()){
 		for (u_int32_t i=0; i<m_cache.size(); ++i){
@@ -112,9 +112,11 @@ bool CoapNode::addEntry(Ipv4Address addr,std::string url, uint32_t maxAge){
 
 
 void CoapNode::checkCache(){
-  if(!m_cache.empty()){
-		for (u_int32_t i=0; i<m_cache.size(); ++i){
-      ping(m_cache[i].ip,COAP_DEFAULT_PORT);
+	if(!m_cache.empty()){
+		if(m_activatePing){
+			for (u_int32_t i=0; i<m_cache.size(); ++i){
+				ping(m_cache[i].ip,COAP_DEFAULT_PORT);
+			}
 		}
 	}
 }

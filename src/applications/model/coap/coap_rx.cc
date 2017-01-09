@@ -95,11 +95,11 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
                 std::string vser = split(vname,'/')[1];
                 NS_LOG_INFO("\t|-> URL: "<<sip<<" Service:"<< vser);
                 addEntry(sip,vser,recvAge);
-                if(m_activatePing) ping(sip,COAP_DEFAULT_PORT);
+                //if(m_activatePing) ping(sip,COAP_DEFAULT_PORT);
               }else{
                 NS_LOG_INFO("\t|-> URL: Localhost Service:"<< vname);
                 addEntry( InetSocketAddress::ConvertFrom (from).GetIpv4(),vname,recvAge);
-                if(m_activatePing) ping(InetSocketAddress::ConvertFrom (from).GetIpv4(),COAP_DEFAULT_PORT);
+                //if(m_activatePing) ping(InetSocketAddress::ConvertFrom (from).GetIpv4(),COAP_DEFAULT_PORT);
               }
             }
           }
