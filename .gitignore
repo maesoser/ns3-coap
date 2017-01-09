@@ -21,17 +21,15 @@ src/*
 !src/smf/test/*
 !src/applications
 !src/applications/*
-!src/applications/bindings
-!src/applications/bindings/*
-!src/applications/doc
-!src/applications/doc/*
+src/applications/bindings
+src/applications/bindings/*
+src/applications/doc
+src/applications/doc/*
 !src/applications/helper
-!src/applications/helper/*
-!src/applications/model
-!src/applications/model/*
+!src/applications/helper/coapnode-helper.h
+!src/applications/helper/coapnode-helper.cc
+!src/applications/helper/coap-helper.h
 !src/applications/model/coap
 !src/applications/model/coap/*
-!src/applications/test
-!src/applications/test/*
 
 
