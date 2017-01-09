@@ -21,10 +21,6 @@ src/*
 !src/smf/test/*
 !src/applications
 !src/applications/*
-src/applications/bindings
-src/applications/bindings/*
-src/applications/doc
-src/applications/doc/*
 !src/applications/helper
 !src/applications/helper/coapnode-helper.h
 !src/applications/helper/coapnode-helper.cc
