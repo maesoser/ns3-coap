@@ -150,7 +150,7 @@ int main (int argc, char *argv[])
   double distance = 500;  // meters
   double RxGain   = -10; // dB   -> Antiguo valor era -10
   uint32_t speed = 0;
-  double initialEnergy = 300; // joule
+  double initialEnergy = 5000; // joule
   double finalEnergy = 0;
   double voltage = 5.0; // volts
   // Power based on ESP8266 POwer consumption
