@@ -114,9 +114,11 @@ bool CoapNode::addEntry(Ipv4Address addr,std::string url, uint32_t maxAge){
 void CoapNode::checkCache(){
 	if(!m_cache.empty()){
 		if(m_activatePing){
+			NS_LOG_INFO("START_PING");
 			for (u_int32_t i=0; i<m_cache.size(); ++i){
 				ping(m_cache[i].ip,COAP_DEFAULT_PORT);
 			}
+			NS_LOG_INFO("STOP_PING");
 		}
 	}
 }
