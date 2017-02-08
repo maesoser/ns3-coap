@@ -150,17 +150,18 @@ uint16_t CoapNode::put(Ipv4Address ip, int port, char *url, char *payload, int p
 }
 
 void CoapNode::sendmDnsRequest(){
-   MDns my_mdns;
+   MDns my_mdns(m_dnssocket,m_txTrace);
    my_mdns.Clear();
    struct Query query_mqtt;
-   strncpy(query_mqtt.qname_buffer,  "_mqtt._tcp.local", MAX_MDNS_NAME_LEN);
+   strncpy(query_mqtt.qname_buffer,  "well_known._coap._udp.local", MAX_MDNS_NAME_LEN);
    query_mqtt.qtype = MDNS_TYPE_PTR;
    query_mqtt.qclass = 1;    // "INternet"
    query_mqtt.unicast_response = 0;
    my_mdns.AddQuery(query_mqtt);
    Ipv4Address dnsmcast(MDNS_MCAST_ADDR);
-   //my_mdns.Send(m_dnssocket,dnsmcast,m_txTrace);
+   my_mdns.Send(m_dnssocket,dnsmcast,m_txTrace);
 
+   /*
    Ptr<Packet> udp_p;
    udp_p = Create<Packet> ((uint8_t *)my_mdns.data_buffer, my_mdns.data_size);
    udp_p->RemoveAllPacketTags ();
@@ -169,7 +170,7 @@ void CoapNode::sendmDnsRequest(){
    m_txTrace(udp_p);
 
    m_dnssocket->SendTo(udp_p,0,InetSocketAddress(Ipv4Address::ConvertFrom(dnsmcast), MDNS_TARGET_PORT));
-
+   */
    if (Ipv4Address::IsMatchingType (dnsmcast))
      {
        NS_LOG_INFO (Simulator::Now ().GetSeconds () << "s "<< GetAddr() <<" send " << my_mdns.data_size << " bytes to " << Ipv4Address::ConvertFrom (dnsmcast) << ":" << MDNS_MCAST_ADDR);

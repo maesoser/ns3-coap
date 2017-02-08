@@ -43,49 +43,59 @@ typedef struct Answer{
 
 class MDns {
  public:
-   unsigned int data_size;  // Size of mDNS packet.
-   unsigned int buffer_pointer;  // Position in data_buffer while processing packet.
-   uint8_t data_buffer[MAX_PACKET_SIZE];  // Buffer containing mDNS packet.
-  // Call this regularly to check for an incoming packet.
-bool recvdns(Ptr<Packet> dnspacket, Address from);
-  // Send this MDns packet.
-void Send(Ptr<Socket> sockt,Ipv4Address addrs,	TracedCallback<Ptr<const Packet> > tracer) const;
 
-  // Resets everything to reperesent an empty packet.
-  // Do this before building a packet for sending.
-  void Clear();
-
-  // Add a query to packet prior to sending.
-  // May only be done before any Answers have been added.
-  void AddQuery(const Query query);
-
-  // Add an answer to packet prior to sending.
-  void AddAnswer(const Answer answer);
-
-  // Display a summary of the packet on Serial port.
-  void Display() const;
-
-  // Display the raw packet in HEX and ASCII.
-  //void DisplayRawPacket() const;
-
- private:
-
-  struct Query Parse_Query();
-  struct Answer Parse_Answer();
-  unsigned int PopulateName(const char* name_buffer);
-  void PopulateAnswerResult(Answer* answer);
-
-  bool writeToBuffer(const uint8_t value, char* p_name_buffer, int* p_name_buffer_pos, const int name_buffer_len);
-  int nameFromDnsPointer(char* p_name_buffer, int name_buffer_pos, const int name_buffer_len,const uint8_t* p_packet_buffer, int packet_buffer_pos, const bool recurse);
-  int nameFromDnsPointer(char* p_name_buffer, int name_buffer_pos, const int name_buffer_len,const uint8_t* p_packet_buffer, int packet_buffer_pos);
-  int parseText(char* data_buffer, const int data_buffer_len, const int data_len,const uint8_t* p_packet_buffer, int packet_buffer_pos);
-
+  Query lastQuery;
+  Answer lastAnswer;
 
   bool type;  // Query or Answer
-  bool truncated;  // Whether more follows in another packet.
-  unsigned int query_count;  // Number of Qeries in the packet.
-  unsigned int answer_count;  // Number of Answers in the packet.
-  unsigned int ns_count;
-  unsigned int ar_count;
+	bool truncated;  // Whether more follows in another packet.
+	unsigned int query_count;  // Number of Qeries in the packet.
+	unsigned int answer_count;  // Number of Answers in the packet.
+	unsigned int ns_count;
+	unsigned int ar_count;
+
+	unsigned int data_size;  // Size of mDNS packet.
+	unsigned int buffer_pointer;  // Position in data_buffer while processing packet.
+	uint8_t data_buffer[MAX_PACKET_SIZE];  // Buffer containing mDNS packet.
+	// Call this regularly to check for an incoming packet.
+	int recvdns(Ptr<Packet> dnspacket, Address from);
+	// Send this MDns packet.
+	void Send(Ptr<Socket> sockt,Ipv4Address addrs,	TracedCallback<Ptr<const Packet> > tracer) const;
+
+	// Resets everything to reperesent an empty packet.
+	// Do this before building a packet for sending.
+	void Clear();
+
+	// Add a query to packet prior to sending.
+	// May only be done before any Answers have been added.
+	void AddQuery(const Query query);
+
+	// Add an answer to packet prior to sending.
+	void AddAnswer(const Answer answer);
+
+	// Display a summary of the packet on Serial port.
+	void Display() const;
+
+	MDns(Ptr<Socket> a,TracedCallback<Ptr<const Packet> > b);
+	// Display the raw packet in HEX and ASCII.
+	//void DisplayRawPacket() const;
+	struct Answer Parse_Answer();
+ private:
+
+	struct Query Parse_Query();
+	unsigned int PopulateName(const char* name_buffer);
+	void PopulateAnswerResult(Answer* answer);
+
+	bool writeToBuffer(const uint8_t value, char* p_name_buffer, int* p_name_buffer_pos, const int name_buffer_len);
+	int nameFromDnsPointer(char* p_name_buffer, int name_buffer_pos, const int name_buffer_len,const uint8_t* p_packet_buffer, int packet_buffer_pos, const bool recurse);
+	int nameFromDnsPointer(char* p_name_buffer, int name_buffer_pos, const int name_buffer_len,const uint8_t* p_packet_buffer, int packet_buffer_pos);
+	int parseText(char* data_buffer, const int data_buffer_len, const int data_len,const uint8_t* p_packet_buffer, int packet_buffer_pos);
+
+
+
+
+	Ptr<Socket> m_dnssocket;
+	TracedCallback<Ptr<const Packet> > m_txTrace;     /// Callbacks for tracing the packet Tx events
+
 };
 #endif  // MDNS_H

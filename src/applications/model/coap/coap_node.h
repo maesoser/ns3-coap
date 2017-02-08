@@ -167,13 +167,16 @@ class CoapNode : public Application{
 			virtual ~CoapNode ();
 			static TypeId GetTypeId (void);
 			Ipv4Address GetAddr();
+			Ptr<Socket> m_dnssocket;
+			TracedCallback<Ptr<const Packet> > m_txTrace;     /// Callbacks for tracing the packet Tx events
 
 		protected:
 			virtual void DoDispose (void);
 		private:
 			virtual void StartApplication (void);
 			virtual void StopApplication (void);
-
+			void splitlist( std::string &s, char delim, std::vector<std::string> &elems);
+			std::vector<std::string> split( std::string &s, char delim);
 			void ScheduleTransmit (Time dt);
 			void SchedulePurgeCache (uint32_t deltime);
 
@@ -182,6 +185,7 @@ class CoapNode : public Application{
 			void HandleRead (Ptr<Socket> socket);
 			int parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf, size_t buflen);
 			bool recvDtg(Ptr<Socket> socket);
+			std::string Ipv4AddressToString (Ipv4Address ad);
 
 			// SEND THINGS
 			// Prepares the packet to be sent
@@ -195,6 +199,7 @@ class CoapNode : public Application{
 			//Deal wioth the scheduling thing and all that stuff
 			void SendDiscovery();
 			void sendCache(Ipv4Address ip, int port, uint16_t messageid);
+			void sendMDnsCache(Query query);
 			void ping(Ipv4Address ip, int port);
 			void sendCachePart(Ipv4Address ip, int port, uint16_t messageid,std::string payloadstr);
 			// Send responses (Taking care of messageid and changing some other things)
@@ -222,14 +227,12 @@ class CoapNode : public Application{
 			uint64_t Normal(double max);
 
 			void showResume();
-			std::string Ipv4AddressToString (Ipv4Address ad);
 			void readServicesFile();
 
 			std::string getTypeStr(uint8_t type);
 			std::string getMthStr(uint8_t type);
 
-			void split( std::string &s, char delim, std::vector<std::string> &elems);
-			std::vector<std::string> split( std::string &s, char delim);
+
 
 			void checkCache();
 
@@ -262,7 +265,6 @@ class CoapNode : public Application{
 			uint8_t *m_data; //!< packet payload data
 			Ptr<Socket> m_socket; //!< IPv4 Socket
 			Ptr<Socket> m_socket6; //!< IPv6 Socket
-			Ptr<Socket> m_dnssocket;
 
 			Address m_local; //!< local multicast address
 
@@ -271,10 +273,9 @@ class CoapNode : public Application{
 			EventId m_sendEvent; //!< Event to send the next packet
 			EventId m_showCache;
 
-			TracedCallback<Ptr<const Packet> > m_txTrace;     /// Callbacks for tracing the packet Tx events
 
 			uint32_t m_activatemDns = 0;
-                        uint32_t m_activatePing = 0;
+            uint32_t m_activatePing = 0;
 
 	}; // Class coapNode
 

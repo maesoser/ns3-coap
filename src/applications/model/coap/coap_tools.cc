@@ -22,7 +22,7 @@ uint64_t CoapNode::Normal(double max) {
 	return random->GetValue(0.0, max);
 }
 
-void CoapNode::split( std::string &s, char delim, std::vector<std::string> &elems) {
+void CoapNode::splitlist( std::string &s, char delim, std::vector<std::string> &elems) {
     std::stringstream ss;
     ss.str(s);
     std::string item;
@@ -33,7 +33,7 @@ void CoapNode::split( std::string &s, char delim, std::vector<std::string> &elem
 
 std::vector<std::string> CoapNode::split( std::string &s, char delim) {
     std::vector<std::string> elems;
-    split(s, delim, elems);
+    splitlist(s, delim, elems);
     return elems;
 }
 

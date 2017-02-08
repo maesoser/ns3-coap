@@ -218,12 +218,29 @@ void CoapNode::HandleDns(Ptr<Socket> socket){
   while ((dnspacket = socket->RecvFrom (from))) {
 	 uint32_t data_size = dnspacket->GetSize ();
 
-   if (InetSocketAddress::IsMatchingType (from)){
-     NS_LOG_INFO ("DNS "<<Simulator::Now().GetSeconds () <<"s "<< GetAddr() <<" receive " << data_size << " bytes from " << InetSocketAddress::ConvertFrom (from).GetIpv4 () << ":" <<InetSocketAddress::ConvertFrom (from).GetPort ());
-   }
-  MDns my_mdns;
-  my_mdns.recvdns(dnspacket,from);
-}
+     if (InetSocketAddress::IsMatchingType (from)){
+       NS_LOG_INFO ("DNS "<<Simulator::Now().GetSeconds () <<"s "<< GetAddr() <<" receive " << data_size << " bytes from " << InetSocketAddress::ConvertFrom (from).GetIpv4 () << ":" <<InetSocketAddress::ConvertFrom (from).GetPort ());
+     }
+    MDns my_mdns(m_dnssocket,m_txTrace);
+    int res = my_mdns.recvdns(dnspacket,from);
+    if(res==1) {  // Recibe Query
+      my_mdns.Clear();
+   		sendMDnsCache(my_mdns.lastQuery);
+    }
+    if(res==2){  // Recibe Answer, tiene que procesar la Query
+      for (uint32_t i = 0; i < (my_mdns.answer_count + my_mdns.ns_count + my_mdns.ar_count); i++) {
+        const Answer answer = my_mdns.Parse_Answer();
+        if (answer.valid) {
+					std::string puri(answer.rdata_buffer);
+					Ipv4Address mdip(split(puri,'/')[0].c_str());
+					std::string vser = split(puri,'/')[1];
+          addEntry(mdip, vser, answer.rrttl);
+          //NS_LOG_INFO("\t|-> ANSW: "<< answer.name_buffer<<" = "<< answer.rdata_buffer);
+        }
+      }
+
+    }
+  }
 }
 /*
  * It Schedules the transmission of the next packet request for discovery of the actual network

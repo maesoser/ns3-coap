@@ -4,7 +4,6 @@ using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("Coap_mDNS");
 
-
 void MDns::Clear() {
   data_buffer[0] = 0;     // Query ID field which is unused in mDNS.
   data_buffer[1] = 0;     // Query ID field which is unused in mDNS.
@@ -28,6 +27,10 @@ void MDns::Clear() {
   ar_count = 0;
 }
 
+MDns::MDns(Ptr<Socket> a,TracedCallback<Ptr<const Packet> > b){
+	m_dnssocket = a;
+	m_txTrace = b;     /// Callbacks for tracing the packet Tx events
+	}
 unsigned int MDns::PopulateName(const char* name_buffer) {
   // TODO: This section does not match the full mDNS spec
   // as it does not re-use strings from previous queries.
@@ -173,11 +176,9 @@ Query MDns::Parse_Query() {
 
   if (buffer_pointer > data_size) {
     // We've over-run the returned data.
-    // Something has gone wrong receiving or parseing the data.
-    NS_LOG_INFO(" **ERROR size** ");
-    NS_LOG_INFO(buffer_pointer);
-    NS_LOG_INFO(" ");
-    NS_LOG_INFO(data_size);
+    // Something has gone wrong receiving or parsing the data.
+    NS_LOG_INFO(" **ERROR size when parsing query** ");
+    NS_LOG_INFO("buff_pointer:"<<buffer_pointer<<"\tdata size:"<<data_size);
     return_value.valid = false;
   }
   return return_value;
@@ -185,6 +186,7 @@ Query MDns::Parse_Query() {
 
 Answer MDns::Parse_Answer() {
   Answer return_value;
+  buffer_pointer = 12;
   return_value.buffer_pointer = buffer_pointer;
 
   buffer_pointer = nameFromDnsPointer(return_value.name_buffer, 0, MAX_MDNS_NAME_LEN, data_buffer, buffer_pointer);
@@ -207,10 +209,8 @@ Answer MDns::Parse_Answer() {
   if (buffer_pointer > data_size) {
     // We've over-run the returned data.
     // Something has gone wrong receiving or parseing the data.
-    NS_LOG_INFO(" **ERROR size** ");
-    NS_LOG_INFO(buffer_pointer);
-    NS_LOG_INFO(" ");
-    NS_LOG_INFO(data_size);
+    NS_LOG_INFO(" **ERROR size when parsing answer** ");
+    NS_LOG_INFO("buff_pointer:"<<buffer_pointer<<"\tdata size:"<<data_size);
     return_value.valid = false;
   }
   return return_value;
@@ -349,8 +349,9 @@ int MDns::parseText(char* data_buffer, const int data_buffer_len, const int data
 }
 
 
-bool MDns::recvdns(Ptr<Packet> dnspacket, Address from) {
-    NS_LOG_INFO("|-> DNS");
+int MDns::recvdns(Ptr<Packet> dnspacket, Address from) {
+	 Clear();
+	 int out = 0;
      data_size = dnspacket->GetSize ();
      if(data_size > MAX_PACKET_SIZE) {
       // Incoming data will not fit in buffer.
@@ -377,7 +378,7 @@ bool MDns::recvdns(Ptr<Packet> dnspacket, Address from) {
     answer_count = (data_buffer[6] << 8) + data_buffer[7];	    // Number of incoming answers.
     ns_count = (data_buffer[8] << 8) + data_buffer[9];	    // Number of incoming Name Server resource records.
     ar_count = (data_buffer[10] << 8) + data_buffer[11];	    // Number of incoming Additional resource records.
-    NS_LOG_INFO("\t|-> Q: "<< query_count<<"   A: "<<answer_count<<"   NS: "<<ns_count<<"   ADT: "<<ar_count);
+    NS_LOG_INFO("\t|-> Q_LEN: "<< query_count<<"   A_LEN: "<<answer_count<<"   NS_LEN: "<<ns_count<<"   ADT_LEN: "<<ar_count);
 
     /*if(p_packet_function_) {
       p_packet_function_(this);	      // Since a callback function has been registered, execute it.
@@ -387,27 +388,34 @@ bool MDns::recvdns(Ptr<Packet> dnspacket, Address from) {
     for (uint32_t i_question = 0; i_question < query_count; i_question++) {
       const Query query = Parse_Query();
       if (query.valid) {
-        NS_LOG_INFO("\t|-> Q: "<< query.qname_buffer);
-        /*if (p_query_function_) {
-          // Since a callback function has been registered, execute it.
-          p_query_function_(&query);
-        }*/
+        NS_LOG_INFO("\t|-> QUERY: "<< query.qname_buffer);
+        lastQuery = query;
+        /*
+        struct Answer rransw;
+        strncpy(rransw.rdata_buffer, "merde", MAX_MDNS_NAME_LEN);
+    		strncpy(rransw.name_buffer,  query.qname_buffer, MAX_MDNS_NAME_LEN);
+    		rransw.rrtype = MDNS_TYPE_PTR;
+    		rransw.rrclass = 1;    // "INternet"
+    		rransw.rrttl = 1;
+    		rransw.rrset = 1;
+    		Clear();
+    		AddAnswer(rransw);
+    		Ipv4Address dnsmcast(MDNS_MCAST_ADDR);
+    		Send(m_dnssocket,dnsmcast,m_txTrace);*/
+		out = 1;
       }
     }
-
     for (uint32_t i_answer = 0; i_answer < (answer_count + ns_count + ar_count); i_answer++) {
       const Answer answer = Parse_Answer();
       if (answer.valid) {
-        /*if (p_answer_function_) {
-          // Since a callback function has been registered, execute it.
-          p_answer_function_(&answer);
-        }*/
+		 NS_LOG_INFO("\t|-> ANSW: "<< answer.name_buffer<<" = "<< answer.rdata_buffer);
+		 out = 2;
       }
     }
-    return true;
+    return out;
   }
 
-void MDns::Send(Ptr<Socket> sockt,Ipv4Address addrs,	TracedCallback<Ptr<const Packet> > tracer) const {
+void MDns::Send(Ptr<Socket> sockt,Ipv4Address addrs, TracedCallback<Ptr<const Packet> > tracer) const {
   Ptr<Packet> udp_p;
   udp_p = Create<Packet> ((uint8_t *)data_buffer, data_size);
   udp_p->RemoveAllPacketTags ();
