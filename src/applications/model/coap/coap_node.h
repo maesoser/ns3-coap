@@ -158,6 +158,14 @@ typedef enum {
 	    CoapOption options[MAX_OPTION_NUM];
 	};
 
+	struct coapCacheItem{
+		Ipv4Address ip;
+		uint32_t age;
+		std::string url;
+		std::string title;
+	};
+	
+
 class Socket;
 class Packet;
 
@@ -169,6 +177,7 @@ class CoapNode : public Application{
 			Ipv4Address GetAddr();
 			Ptr<Socket> m_dnssocket;
 			TracedCallback<Ptr<const Packet> > m_txTrace;     /// Callbacks for tracing the packet Tx events
+			std::vector<struct ns3::coapCacheItem> m_cache;
 
 		protected:
 			virtual void DoDispose (void);
@@ -232,16 +241,7 @@ class CoapNode : public Application{
 			std::string getTypeStr(uint8_t type);
 			std::string getMthStr(uint8_t type);
 
-
-
 			void checkCache();
-
-			struct coapCacheItem{
-				Ipv4Address ip;
-				uint32_t age;
-				std::string url;
-				std::string title;
-			};
 
 			uint16_t m_answType; //! Is it mcast or ucast answer?
 			uint16_t m_dataType; //! Is it get disco or get temp
@@ -260,7 +260,6 @@ class CoapNode : public Application{
 
 			std::vector<eventItem> m_idlist;
 
-			std::vector<struct coapCacheItem> m_cache;
 
 			uint8_t *m_data; //!< packet payload data
 			Ptr<Socket> m_socket; //!< IPv4 Socket

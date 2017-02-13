@@ -86,54 +86,58 @@ size_t CoapNode::getOldestEntry(){
 }
 
 void CoapNode::showCache(){
-  checkCache();
-  deleteOutdated();
 	if(!m_cache.empty()){
 		for (u_int32_t i=0; i<m_cache.size(); ++i){
-		NS_LOG_INFO("CACHE_DUMP,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<","<< std::to_string(m_cache[i].age)<<","<<Ipv4AddressToString(m_cache[i].ip)<<"/"<<m_cache[i].url);
+			NS_LOG_INFO("CACHE_DUMP,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<","<< std::to_string(m_cache[i].age)<<","<<Ipv4AddressToString(m_cache[i].ip)<<"/"<<m_cache[i].url);
 		}
 	}
   else{
       NS_LOG_INFO("CACHE_DUMP,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<",EMP");
   }
-      m_showCache = Simulator::Schedule (Seconds(30), &CoapNode::showCache, this);
+  m_showCache = Simulator::Schedule (Seconds(30), &CoapNode::showCache, this);
+	checkCache();
+	deleteOutdated();
 }
 
 void CoapNode::sendMDnsCache(Query query){
-  checkCache();
-  deleteOutdated();
-  NS_LOG_INFO("MDNS_CACHE_SEND");
-  MDns cmdns(m_dnssocket,m_txTrace);
-  cmdns.Clear();
-  std::string result = Ipv4AddressToString(GetAddr())+ "/temp";
-  const char * cresult = result.c_str();
-  struct Answer ownansw;
-  strncpy(ownansw.rdata_buffer,cresult, MAX_MDNS_NAME_LEN);
-  strncpy(ownansw.name_buffer,  query.qname_buffer, MAX_MDNS_NAME_LEN);
-  ownansw.rrtype = MDNS_TYPE_PTR;
-  ownansw.rrclass = 1;    // "INternet"
-  ownansw.rrttl = 1;
-  ownansw.rrset = 1;
-  cmdns.AddAnswer(ownansw);
-  Ipv4Address dnsmcast(MDNS_MCAST_ADDR);
+	//checkCache();
+	deleteOutdated();
+	NS_LOG_INFO("MDNS_CACHE_SEND");
+	MDns cmdns(m_dnssocket,m_txTrace);
+	cmdns.Clear();
+
+	Ipv4Address dnsmcast(MDNS_MCAST_ADDR);
+
+	std::string result = Ipv4AddressToString(GetAddr())+ "/temp";
+	const char * cresult = result.c_str();
+	struct Answer ownansw;
+	strncpy(ownansw.rdata_buffer,cresult, MAX_MDNS_NAME_LEN);
+	strncpy(ownansw.name_buffer,  query.qname_buffer, MAX_MDNS_NAME_LEN);
+	ownansw.rrtype = MDNS_TYPE_PTR;
+	ownansw.rrclass = 1;    // "INternet"
+	ownansw.rrttl = m_ageTime;
+	ownansw.rrset = 1;
+	cmdns.AddAnswer(ownansw);
+
 	if(!m_cache.empty()){
 		for (u_int32_t i=0; i<m_cache.size(); ++i){
-      std::ostringstream oss;
-      m_cache[i].ip.Print (oss);
-      std::string result = oss.str()+ "/" +m_cache[i].url;
-      const char * cresult = result.c_str();
-      struct Answer rransw;
-      strncpy(rransw.rdata_buffer,cresult, MAX_MDNS_NAME_LEN);
-      strncpy(rransw.name_buffer,  query.qname_buffer, MAX_MDNS_NAME_LEN);
-      rransw.rrtype = MDNS_TYPE_PTR;
-      rransw.rrclass = 1;    // "INternet"
-      rransw.rrttl = 1;
-      rransw.rrset = 1;
-      cmdns.AddAnswer(rransw);
-		  //NS_LOG_INFO("MDNS_CACHE_SEND,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<","<< std::to_string(m_cache[i].age)<<","<<Ipv4AddressToString(m_cache[i].ip)<<"/"<<m_cache[i].url);
+			std::ostringstream oss;
+			m_cache[i].ip.Print (oss);
+			std::string result = oss.str()+ "/" +m_cache[i].url;
+			const char * cresult = result.c_str();
+			struct Answer rransw;
+			NS_LOG_INFO("DEBUG_ANSW from " << Ipv4AddressToString(GetAddr()) << " SEND " << cresult);
+			strncpy(rransw.rdata_buffer,cresult, MAX_MDNS_NAME_LEN);
+			strncpy(rransw.name_buffer,  query.qname_buffer, MAX_MDNS_NAME_LEN);
+			rransw.rrtype = MDNS_TYPE_PTR;
+			rransw.rrclass = 1;    // "INternet"
+			rransw.rrttl = 1;
+			rransw.rrset = 1;
+			cmdns.AddAnswer(rransw);
+			//NS_LOG_INFO("MDNS_CACHE_SEND,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<","<< std::to_string(m_cache[i].age)<<","<<Ipv4AddressToString(m_cache[i].ip)<<"/"<<m_cache[i].url);
 		}
 	}
-  cmdns.Send(m_dnssocket,dnsmcast,m_txTrace);
+	cmdns.Send(m_dnssocket,dnsmcast,m_txTrace);
 }
 
 bool CoapNode::addEntry(Ipv4Address addr,std::string url, uint32_t maxAge){

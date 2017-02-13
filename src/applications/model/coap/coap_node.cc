@@ -224,21 +224,23 @@ void CoapNode::HandleDns(Ptr<Socket> socket){
     MDns my_mdns(m_dnssocket,m_txTrace);
     int res = my_mdns.recvdns(dnspacket,from);
     if(res==1) {  // Recibe Query
-      my_mdns.Clear();
-   		sendMDnsCache(my_mdns.lastQuery);
+   	  sendMDnsCache(my_mdns.queries[0]);
+   	  //my_mdns.Clear();
     }
     if(res==2){  // Recibe Answer, tiene que procesar la Query
-      for (uint32_t i = 0; i < (my_mdns.answer_count + my_mdns.ns_count + my_mdns.ar_count); i++) {
-        const Answer answer = my_mdns.Parse_Answer();
-        if (answer.valid) {
-					std::string puri(answer.rdata_buffer);
-					Ipv4Address mdip(split(puri,'/')[0].c_str());
-					std::string vser = split(puri,'/')[1];
-          addEntry(mdip, vser, answer.rrttl);
-          //NS_LOG_INFO("\t|-> ANSW: "<< answer.name_buffer<<" = "<< answer.rdata_buffer);
-        }
-      }
+		NS_LOG_INFO("DEBUG ANSW LENGTH " << my_mdns.answers.size());
+		for (u_int32_t i=0; i<my_mdns.answers.size(); ++i){
+			const Answer answer = my_mdns.answers[i];
+			if (answer.valid) {
+				std::string puri(answer.rdata_buffer);
+				Ipv4Address mdip(split(puri,'/')[0].c_str());
+				std::string vser = split(puri,'/')[1];
+				addEntry(mdip, vser, m_ageTime);
+				NS_LOG_INFO("DEBUG ANSW: "<< answer.name_buffer<<" = "<< answer.rdata_buffer);
 
+			  //NS_LOG_INFO("\t|-> ANSW: "<< answer.name_buffer<<" = "<< answer.rdata_buffer);
+			}
+		}
     }
   }
 }

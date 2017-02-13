@@ -33,3 +33,9 @@ Here is some example about the usage of this script
 ```
 ./run --routing=0 --verbose=1 --ping=0 --speed=40  --interval=15
 ```
+
+# Acknowledgements
+
+mDNS code is strongly based on @mrdunk [code written for esp8255 microcontroller](https://github.com/mrdunk/esp8266_mdns)
+
+COAP code is strongly based on @hirotakaser [Simple CoAP library for Particle Core and Photon](https://github.com/hirotakaster/CoAP)

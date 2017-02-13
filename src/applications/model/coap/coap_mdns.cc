@@ -25,6 +25,9 @@ void MDns::Clear() {
   answer_count = 0;
   ns_count = 0;
   ar_count = 0;
+
+  answers.clear();
+  queries.clear();
 }
 
 MDns::MDns(Ptr<Socket> a,TracedCallback<Ptr<const Packet> > b){
@@ -133,21 +136,6 @@ void MDns::AddAnswer(const Answer answer) {
   data_buffer[rdata_len_p1] = rdata_len & 0xFF;
 
   data_size = buffer_pointer;
-}
-
-void MDns::Display() const {
-  NS_LOG_INFO("Packet size: ");
-  NS_LOG_INFO(data_size);
-  NS_LOG_INFO(" TYPE: ");
-  NS_LOG_INFO(type);
-  NS_LOG_INFO("      QUERY_COUNT: ");
-  NS_LOG_INFO(query_count);
-  NS_LOG_INFO("      ANSWER_COUNT: ");
-  NS_LOG_INFO(answer_count);
-  NS_LOG_INFO("      NS_COUNT: ");
-  NS_LOG_INFO(ns_count);
-  NS_LOG_INFO("      AR_COUNT: ");
-  NS_LOG_INFO(ar_count);
 }
 
 Query MDns::Parse_Query() {
@@ -389,7 +377,7 @@ int MDns::recvdns(Ptr<Packet> dnspacket, Address from) {
       const Query query = Parse_Query();
       if (query.valid) {
         NS_LOG_INFO("\t|-> QUERY: "<< query.qname_buffer);
-        lastQuery = query;
+        queries.push_back(query);
         /*
         struct Answer rransw;
         strncpy(rransw.rdata_buffer, "merde", MAX_MDNS_NAME_LEN);
@@ -406,10 +394,11 @@ int MDns::recvdns(Ptr<Packet> dnspacket, Address from) {
       }
     }
     for (uint32_t i_answer = 0; i_answer < (answer_count + ns_count + ar_count); i_answer++) {
-      const Answer answer = Parse_Answer();
-      if (answer.valid) {
-		 NS_LOG_INFO("\t|-> ANSW: "<< answer.name_buffer<<" = "<< answer.rdata_buffer);
-		 out = 2;
+			const Answer answer = Parse_Answer();
+			if (answer.valid) {
+			answers.push_back(answer);
+			NS_LOG_INFO("\t|-> ANSW: "<< answer.name_buffer<<" = "<< answer.rdata_buffer);
+			out = 2;
       }
     }
     return out;

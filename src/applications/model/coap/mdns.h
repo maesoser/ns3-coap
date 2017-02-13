@@ -39,13 +39,12 @@ typedef struct Answer{
   bool valid;                           // False if problems were encountered decoding packet.
 
 } Answer;
-
-
+			
 class MDns {
  public:
 
-  Query lastQuery;
-  Answer lastAnswer;
+  std::vector<Query> queries;
+  std::vector<Answer> answers;
 
   bool type;  // Query or Answer
 	bool truncated;  // Whether more follows in another packet.
@@ -73,9 +72,6 @@ class MDns {
 	// Add an answer to packet prior to sending.
 	void AddAnswer(const Answer answer);
 
-	// Display a summary of the packet on Serial port.
-	void Display() const;
-
 	MDns(Ptr<Socket> a,TracedCallback<Ptr<const Packet> > b);
 	// Display the raw packet in HEX and ASCII.
 	//void DisplayRawPacket() const;
@@ -90,8 +86,6 @@ class MDns {
 	int nameFromDnsPointer(char* p_name_buffer, int name_buffer_pos, const int name_buffer_len,const uint8_t* p_packet_buffer, int packet_buffer_pos, const bool recurse);
 	int nameFromDnsPointer(char* p_name_buffer, int name_buffer_pos, const int name_buffer_len,const uint8_t* p_packet_buffer, int packet_buffer_pos);
 	int parseText(char* data_buffer, const int data_buffer_len, const int data_len,const uint8_t* p_packet_buffer, int packet_buffer_pos);
-
-
 
 
 	Ptr<Socket> m_dnssocket;
