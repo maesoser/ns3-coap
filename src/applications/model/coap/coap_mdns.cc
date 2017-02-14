@@ -174,7 +174,7 @@ Query MDns::Parse_Query() {
 
 Answer MDns::Parse_Answer() {
   Answer return_value;
-  buffer_pointer = 12;
+  //buffer_pointer = 12;
   return_value.buffer_pointer = buffer_pointer;
 
   buffer_pointer = nameFromDnsPointer(return_value.name_buffer, 0, MAX_MDNS_NAME_LEN, data_buffer, buffer_pointer);

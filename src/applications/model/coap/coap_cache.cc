@@ -126,7 +126,7 @@ void CoapNode::sendMDnsCache(Query query){
 			std::string result = oss.str()+ "/" +m_cache[i].url;
 			const char * cresult = result.c_str();
 			struct Answer rransw;
-			NS_LOG_INFO("DEBUG_ANSW from " << Ipv4AddressToString(GetAddr()) << " SEND " << cresult);
+			//NS_LOG_INFO("DEBUG_ANSW from " << Ipv4AddressToString(GetAddr()) << " SEND " << cresult);
 			strncpy(rransw.rdata_buffer,cresult, MAX_MDNS_NAME_LEN);
 			strncpy(rransw.name_buffer,  query.qname_buffer, MAX_MDNS_NAME_LEN);
 			rransw.rrtype = MDNS_TYPE_PTR;
