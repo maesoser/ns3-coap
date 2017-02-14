@@ -58,10 +58,12 @@ else
   cp coap_animation.xml tempanim.xml
   echo Compressing simulation to $d
   zip $d energy_*
+  rm coap_trace.tr
+  rm coap_animation.xml
   zip -u $d output.log
   zip -u $d *.pcap
-  zip -u $d coap_trace.tr
-  zip -u $d coap_animation.xml
+  #zip -u $d coap_trace.tr
+  #zip -u $d coap_animation.xml
   zip -u $d state_*
   zip -u $d scratch/coap.cc
   zip -u $d routetables
