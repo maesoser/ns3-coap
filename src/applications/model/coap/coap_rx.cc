@@ -94,7 +94,12 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
                 Ipv4Address sip(split(vname,'/')[0].c_str());
                 std::string vser = split(vname,'/')[1];
                 NS_LOG_INFO("\t|-> URL: "<<sip<<" Service:"<< vser);
-                addEntry(sip,vser,recvAge);
+								if (addEntry(sip,vser,recvAge)==false){
+									// If the sender is the same as the one depicted on the cache message, update it TTL
+									if (sip == InetSocketAddress::ConvertFrom(from).GetIpv4()){
+										updateEntry(sip, vser, recvAge);
+									}
+								}
                 //if(m_activatePing) ping(sip,COAP_DEFAULT_PORT);
               }else{
                 NS_LOG_INFO("\t|-> URL: Localhost Service:"<< vname);
