@@ -5,6 +5,7 @@ using namespace ns3;
 NS_LOG_COMPONENT_DEFINE ("CoapNode_cache");
 
 bool CoapNode::existEntry(Ipv4Address ip, std::string url){
+	if(ip==GetAddr()) return true;
   size_t prophash = std::hash<std::string>()(Ipv4AddressToString(ip)+""+url);
 	if(!m_cache.empty()){
 		for (u_int32_t i=0; i<m_cache.size(); ++i){
@@ -131,7 +132,7 @@ void CoapNode::sendMDnsCache(Query query){
 			strncpy(rransw.name_buffer,  query.qname_buffer, MAX_MDNS_NAME_LEN);
 			rransw.rrtype = MDNS_TYPE_PTR;
 			rransw.rrclass = 1;    // "INternet"
-			rransw.rrttl = 1;
+			rransw.rrttl = m_ageTime;
 			rransw.rrset = 1;
 			cmdns.AddAnswer(rransw);
 			//NS_LOG_INFO("MDNS_CACHE_SEND,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<","<< std::to_string(m_cache[i].age)<<","<<Ipv4AddressToString(m_cache[i].ip)<<"/"<<m_cache[i].url);
@@ -139,7 +140,19 @@ void CoapNode::sendMDnsCache(Query query){
 	}
 	cmdns.Send(m_dnssocket,dnsmcast,m_txTrace);
 }
-
+bool CoapNode::updateEntry(Ipv4Address addr,std::string url, uint32_t maxAge){
+	size_t prophash = std::hash<std::string>()(Ipv4AddressToString(addr)+""+url);
+	if(!m_cache.empty()){
+		for (u_int32_t i=0; i<m_cache.size(); ++i){
+      size_t hash = std::hash<std::string>()(Ipv4AddressToString(m_cache[i].ip)+""+m_cache[i].url);
+			if(hash==prophash) {
+				m_cache[i].age = (uint32_t) Simulator::Now().GetSeconds() + maxAge; // This is the time where the entry is gonna be outdated
+				return true;
+			}
+		}
+	}
+	return false;
+}
 bool CoapNode::addEntry(Ipv4Address addr,std::string url, uint32_t maxAge){
   if (existEntry(addr,url)) return false;
 	struct coapCacheItem item;

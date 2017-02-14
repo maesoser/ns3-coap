@@ -164,7 +164,7 @@ typedef enum {
 		std::string url;
 		std::string title;
 	};
-	
+
 
 class Socket;
 class Packet;
@@ -222,6 +222,8 @@ class CoapNode : public Application{
 			int GetEntryIndex(size_t nodeid);
 			size_t getOldestEntry();
 			bool addEntry(Ipv4Address ip,std::string url,uint32_t maxAge);
+			bool updateEntry(Ipv4Address ip,std::string url,uint32_t maxAge);
+
 			bool deleteEntry(size_t nodeid);
 			uint32_t deleteOutdated();
 			void showCache();

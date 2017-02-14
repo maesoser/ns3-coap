@@ -235,7 +235,11 @@ void CoapNode::HandleDns(Ptr<Socket> socket){
 				std::string puri(answer.rdata_buffer);
 				Ipv4Address mdip(split(puri,'/')[0].c_str());
 				std::string vser = split(puri,'/')[1];
-				addEntry(mdip, vser, m_ageTime);
+				if (addEntry(mdip, vser, m_ageTime)==false){
+					if (mdip == InetSocketAddress::ConvertFrom(from).GetIpv4()){
+						updateEntry(mdip, vser, m_ageTime);
+					}
+				}
 
 			  //NS_LOG_INFO("\t|-> ANSW: "<< answer.name_buffer<<" = "<< answer.rdata_buffer);
 			}
