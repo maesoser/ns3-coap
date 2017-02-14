@@ -95,9 +95,24 @@ void CoapNode::showCache(){
   else{
       NS_LOG_INFO("CACHE_DUMP,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<",EMP");
   }
+	saveCache();
   m_showCache = Simulator::Schedule (Seconds(30), &CoapNode::showCache, this);
 	checkCache();
 	deleteOutdated();
+}
+
+void CoapNode::saveCache(){
+	Ptr<OutputStreamWrapper> cacheStream = Create<OutputStreamWrapper>(Ipv4AddressToString(GetAddr())+"_cache", std::ios::out);
+	std::ostream *stream = cacheStream->GetStream ();
+	if(!m_cache.empty()){
+		*stream << "CACHE_DUMP\t"<<Simulator::Now ().GetSeconds ()<<"\t"<< GetAddr() <<"\t"<< m_cache.size() <<std::endl;
+		for (u_int32_t i=0; i<m_cache.size(); ++i){
+			*stream << std::to_string(m_cache[i].age)<<"\t"<<Ipv4AddressToString(m_cache[i].ip)<<"/"<<m_cache[i].url<<std::endl;
+		}
+	}
+  else{
+		*stream << "CACHE_DUMP\t"<<Simulator::Now ().GetSeconds ()<<"\t"<< GetAddr() <<"\t0"<<std::endl;
+  }
 }
 
 void CoapNode::sendMDnsCache(Query query){

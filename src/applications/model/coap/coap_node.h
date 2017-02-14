@@ -48,6 +48,7 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include <algorithm>
+#include "ns3/output-stream-wrapper.h"
 #include "mdns.h"
 
 #define COAP_MCAST_ADDR "224.0.1.187"
@@ -227,6 +228,7 @@ class CoapNode : public Application{
 			bool deleteEntry(size_t nodeid);
 			uint32_t deleteOutdated();
 			void showCache();
+			void saveCache();
 			bool existEntry(Ipv4Address ip, std::string url);
 
 			// DISCOVERY REQUESTS CACHE
