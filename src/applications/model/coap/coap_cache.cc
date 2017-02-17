@@ -102,7 +102,7 @@ void CoapNode::showCache(){
 }
 
 void CoapNode::saveCache(){
-	Ptr<OutputStreamWrapper> cacheStream = Create<OutputStreamWrapper>(Ipv4AddressToString(GetAddr())+"_cache", std::ios::out);
+	Ptr<OutputStreamWrapper> cacheStream = Create<OutputStreamWrapper>(Ipv4AddressToString(GetAddr())+"_cache", std::ios::app);
 	std::ostream *stream = cacheStream->GetStream ();
 	if(!m_cache.empty()){
 		*stream << "CACHE_DUMP\t"<<Simulator::Now ().GetSeconds ()<<"\t"<< GetAddr() <<"\t"<< m_cache.size() <<std::endl;

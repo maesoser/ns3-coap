@@ -64,6 +64,7 @@ else
   zip -u $d *.pcap
   #zip -u $d coap_trace.tr
   #zip -u $d coap_animation.xml
+  zip -u $d *_cache
   zip -u $d state_*
   zip -u $d scratch/coap.cc
   zip -u $d routetables
