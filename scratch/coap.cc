@@ -178,6 +178,7 @@ int main (int argc, char *argv[])
   uint32_t rectangleSize = distance*2*(sqrt(numNodes)-1); // for RandomWalk2dMobilityModel
   uint32_t mDnsOn = 0;
   uint32_t pingopt = 0;
+  uint32_t cacheopt = 0;
   // Routing Helpers
   smfHelper smf;
   AodvHelper aodv;
@@ -203,6 +204,7 @@ int main (int argc, char *argv[])
   cmd.AddValue("runtime","number of seconds the simulatiun will last",runtime);
   cmd.AddValue("mdns","1=mDNS 0=coAP discovery",mDnsOn);
   cmd.AddValue("ping","1=ping on 0=cping off",pingopt);
+  cmd.AddValue("cache","1=cache on 0=cache off",cacheopt);
 
   cmd.Parse (argc, argv);
 
@@ -334,7 +336,6 @@ LogComponentEnable("smfLog",LOG_LEVEL_ALL);
       dsrMain.Install (dsr, nodes);
       break;
     case 5:
-      //routingList.Add (olsr, 5);
       routingList.Add(smf,10);
       smf.PrintRoutingTableAllEvery(Seconds(2),routingStream);
       m_protocolName = "SMF";
@@ -393,7 +394,9 @@ LogComponentEnable("smfLog",LOG_LEVEL_ALL);
   coapnode.SetAttribute ("startDelay",UintegerValue (60));
   coapnode.SetAttribute ("interval", TimeValue (Seconds (interval)));
   coapnode.SetAttribute ("multicastResponse", UintegerValue (1));
-  coapnode.SetAttribute ("cache", UintegerValue (24));
+  if (cacheopt == 0){
+	coapnode.SetAttribute ("cache", UintegerValue (0));
+  }
   coapnode.SetAttribute ("useMaxAge",UintegerValue (maxAge));
   coapnode.SetAttribute ("mDNS",UintegerValue(mDnsOn));
   coapnode.SetAttribute ("ping",UintegerValue(pingopt));

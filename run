@@ -72,10 +72,11 @@ else
   echo Removing files
   rm energy_*
   rm *.pcap
-  rm coap_trace.tr
-  rm coap_animation.xml
+  #rm coap_trace.tr
+  #rm coap_animation.xml
   rm state_*
   rm routetables
+  rm *_cache
   #tail -10 output.log
   #rm output.log
   du -h $d
