@@ -3,8 +3,6 @@
 !run
 !README.md
 !Makefile
-!scratch
-!scratch/*
 !src
 src/*
 !src/smf
@@ -27,5 +25,8 @@ src/*
 !src/applications/helper/coap-helper.h
 !src/applications/model/coap
 !src/applications/model/coap/*
+!*.sh
+!scratch
+!scratch/*
 
 

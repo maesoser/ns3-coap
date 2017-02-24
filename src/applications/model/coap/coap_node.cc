@@ -176,9 +176,9 @@ void CoapNode::StartApplication (void){
   }else{
     m_petitionLimit = false;
   }
-  if(m_cachesize!=0){
+  //if(m_cachesize!=0){	I still want to see cache, even when I do not sent cache elements and just my elements!!
     m_showCache = Simulator::Schedule (Seconds(45), &CoapNode::showCache, this);
-  }
+  //}
 
 }
 

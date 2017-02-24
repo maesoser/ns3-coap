@@ -134,23 +134,24 @@ void CoapNode::sendMDnsCache(Query query){
 	ownansw.rrttl = m_ageTime;
 	ownansw.rrset = 1;
 	cmdns.AddAnswer(ownansw);
-
-	if(!m_cache.empty()){
-		for (u_int32_t i=0; i<m_cache.size(); ++i){
-			std::ostringstream oss;
-			m_cache[i].ip.Print (oss);
-			std::string result = oss.str()+ "/" +m_cache[i].url;
-			const char * cresult = result.c_str();
-			struct Answer rransw;
-			//NS_LOG_INFO("DEBUG_ANSW from " << Ipv4AddressToString(GetAddr()) << " SEND " << cresult);
-			strncpy(rransw.rdata_buffer,cresult, MAX_MDNS_NAME_LEN);
-			strncpy(rransw.name_buffer,  query.qname_buffer, MAX_MDNS_NAME_LEN);
-			rransw.rrtype = MDNS_TYPE_PTR;
-			rransw.rrclass = 1;    // "INternet"
-			rransw.rrttl = m_ageTime;
-			rransw.rrset = 1;
-			cmdns.AddAnswer(rransw);
-			//NS_LOG_INFO("MDNS_CACHE_SEND,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<","<< std::to_string(m_cache[i].age)<<","<<Ipv4AddressToString(m_cache[i].ip)<<"/"<<m_cache[i].url);
+	if (m_cachesize!=0){
+		if(!m_cache.empty()){
+			for (u_int32_t i=0; i<m_cache.size(); ++i){
+				std::ostringstream oss;
+				m_cache[i].ip.Print (oss);
+				std::string result = oss.str()+ "/" +m_cache[i].url;
+				const char * cresult = result.c_str();
+				struct Answer rransw;
+				//NS_LOG_INFO("DEBUG_ANSW from " << Ipv4AddressToString(GetAddr()) << " SEND " << cresult);
+				strncpy(rransw.rdata_buffer,cresult, MAX_MDNS_NAME_LEN);
+				strncpy(rransw.name_buffer,  query.qname_buffer, MAX_MDNS_NAME_LEN);
+				rransw.rrtype = MDNS_TYPE_PTR;
+				rransw.rrclass = 1;    // "INternet"
+				rransw.rrttl = m_ageTime;
+				rransw.rrset = 1;
+				cmdns.AddAnswer(rransw);
+				//NS_LOG_INFO("MDNS_CACHE_SEND,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<","<< std::to_string(m_cache[i].age)<<","<<Ipv4AddressToString(m_cache[i].ip)<<"/"<<m_cache[i].url);
+			}
 		}
 	}
 	cmdns.Send(m_dnssocket,dnsmcast,m_txTrace);

@@ -31,21 +31,22 @@ uint16_t CoapNode::sendResponse(Ipv4Address ip, int port, uint16_t messageid, ch
 
 void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid){
   std::string result = "";
-
-  deleteOutdated();
-  if(!m_cache.empty()){
-    u_int32_t i_actual = 0;
-    for (u_int32_t i=0; i<m_cache.size(); ++i){
-      if(m_cache[i].ip!=ip){
-        result = result + "</"+Ipv4AddressToString(m_cache[i].ip)+ "/" +m_cache[i].url+ ">;title=\"This is a test\",";
-        i_actual++;
-      }
-      if(i_actual==3){
-        i_actual=0;
-        sendCachePart(ip,port, messageid,result);
-        result = "";
-      }
-    }
+  if(m_cachesize!=0){
+	  deleteOutdated();
+	  if(!m_cache.empty()){
+		u_int32_t i_actual = 0;
+		for (u_int32_t i=0; i<m_cache.size(); ++i){
+		  if(m_cache[i].ip!=ip){
+			result = result + "</"+Ipv4AddressToString(m_cache[i].ip)+ "/" +m_cache[i].url+ ">;title=\"This is a test\",";
+			i_actual++;
+		  }
+		  if(i_actual==3){
+			i_actual=0;
+			sendCachePart(ip,port, messageid,result);
+			result = "";
+		  }
+		}
+	  }
   }
   result = result +"</temp>;title=\"This is the local temperature sensor\"";
   sendCachePart(ip,port, messageid,result);
