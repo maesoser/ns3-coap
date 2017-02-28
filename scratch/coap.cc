@@ -179,6 +179,7 @@ int main (int argc, char *argv[])
   uint32_t mDnsOn = 0;
   uint32_t pingopt = 0;
   uint32_t cacheopt = 0;
+  uint32_t mcastopt = 0;
   // Routing Helpers
   smfHelper smf;
   AodvHelper aodv;
@@ -191,21 +192,28 @@ int main (int argc, char *argv[])
   CommandLine cmd;
   cmd.AddValue("distance", "Distance between nodes (m)", distance);
   cmd.AddValue("speed", "Speed of the nodes (m/s)", speed);
+  
+  // Energy related parameters
   cmd.AddValue("gain", "Rx Gain (dB)", RxGain);
   cmd.AddValue("txpower","Transmission Power (dB)",txPowerEnd);
   cmd.AddValue("energy","Initial Energy (J))",initialEnergy);
   cmd.AddValue("voltage","Battery voltage (v)",voltage);
   cmd.AddValue("idlecurrent","Current consumed when iddle (A)",idleCurrent);
   cmd.AddValue("txcurrent","Current consumed when transmitting (A)",txCurrent);
+  
   cmd.AddValue("routing","Current routing protocol 0=NONE,1=OLSR,2=SMF-AODV,3=SMF-DSDV,4=DSR 5=SMF-OLSR",protocol);
-  cmd.AddValue("verbose","Verbosity level 0=ENERGY, 1=LINK, 2=WIFI",verbose);
-  cmd.AddValue("interval","The time to wait between packets. If it is 0-> Server Mode.",interval);
-  cmd.AddValue("maxAge","Delete items after max-Age? If >0 it is the age given to the services",maxAge);
-  cmd.AddValue("runtime","number of seconds the simulatiun will last",runtime);
   cmd.AddValue("mdns","1=mDNS 0=coAP discovery",mDnsOn);
   cmd.AddValue("ping","1=ping on 0=cping off",pingopt);
   cmd.AddValue("cache","1=cache on 0=cache off",cacheopt);
-
+  cmd.AddValue("mcast","1=mcast answers 0=ucast answers",mcastopt);
+  
+  
+  cmd.AddValue("verbose","Verbosity level 0=ENERGY, 1=LINK, 2=WIFI",verbose);
+  
+  cmd.AddValue("interval","The time to wait between packets. If it is 0-> Server Mode.",interval);
+  cmd.AddValue("maxAge","Delete items after max-Age? If >0 it is the age given to the services",maxAge);
+  cmd.AddValue("runtime","number of seconds the simulatiun will last",runtime);
+  
   cmd.Parse (argc, argv);
 
 
@@ -392,13 +400,17 @@ LogComponentEnable("smfLog",LOG_LEVEL_ALL);
 
   CoapNodeHelper coapnode(5683);
   coapnode.SetAttribute ("startDelay",UintegerValue (60));
+  
+  // Interval between discoveries
   coapnode.SetAttribute ("interval", TimeValue (Seconds (interval)));
-  coapnode.SetAttribute ("multicastResponse", UintegerValue (1));
-  if (cacheopt == 0){
-	coapnode.SetAttribute ("cache", UintegerValue (0));
-  }
+  coapnode.SetAttribute ("multicastResponse", UintegerValue (mcastopt));
+  if (cacheopt == 0)	coapnode.SetAttribute ("cache", UintegerValue (0));
+  
+  // default maxAge
   coapnode.SetAttribute ("useMaxAge",UintegerValue (maxAge));
   coapnode.SetAttribute ("mDNS",UintegerValue(mDnsOn));
+  
+  // Tha's useful if you want to verify pings
   coapnode.SetAttribute ("ping",UintegerValue(pingopt));
   apps = coapnode.Install(nodes);
   apps.Start (Seconds (0.0));
@@ -537,7 +549,7 @@ LogComponentEnable("smfLog",LOG_LEVEL_ALL);
 	wifiPhy.EnablePcap ("coap_pcap", devices);
 
 	AnimationInterface anim("coap_animation.xml");
-  anim.SetMaxPktsPerTraceFile(3000);
+	anim.SetMaxPktsPerTraceFile(3000);
 	anim.EnablePacketMetadata (true);
 
   Simulator::ScheduleDestroy (showSummary);

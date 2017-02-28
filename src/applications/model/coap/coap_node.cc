@@ -61,6 +61,14 @@ TypeId CoapNode::GetTypeId (void){
 					UintegerValue (0),
                   MakeUintegerAccessor (&CoapNode::m_activatemDns),
                   MakeUintegerChecker<uint32_t> ())
+		.AddAttribute ("etag","If it is 1, it uses etag to avoid data retransmissions",
+					UintegerValue (0),
+                  MakeUintegerAccessor (&CoapNode::m_etag),
+                  MakeUintegerChecker<uint32_t> ())
+		.AddAttribute ("stime","If it is 1, it uses smart tx time to save transmissions",
+					UintegerValue (0),
+                  MakeUintegerAccessor (&CoapNode::m_stime),
+                  MakeUintegerChecker<uint32_t> ())
 	.AddAttribute ("ping","If it is 1, coAP send a ping every time it receives a cache entry.",
 					UintegerValue (0),
 					MakeUintegerAccessor (&CoapNode::m_activatePing),
