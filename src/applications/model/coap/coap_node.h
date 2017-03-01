@@ -239,7 +239,6 @@ class CoapNode : public Application{
 			// Tools
 			uint64_t Normal(double max);
 
-			void showResume();
 			void readServicesFile();
 
 			std::string getTypeStr(uint8_t type);

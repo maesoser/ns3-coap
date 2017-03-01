@@ -22,6 +22,7 @@
 
 #include<algorithm>
 
+#define CLEAN_UP_TIME 2
 namespace ns3 {
 
 NS_LOG_COMPONENT_DEFINE ("smfLog");
@@ -38,21 +39,16 @@ NS_LOG_COMPONENT_DEFINE ("smfLog");
             return tid;
         }
 
-        RoutingProtocol::RoutingProtocol() :
-        m_ipv4(0)
-         {
+        RoutingProtocol::RoutingProtocol() :m_ipv4(0){
         }
 
         RoutingProtocol::~RoutingProtocol() {
         };
 
-        ns3::Ptr<ns3::Ipv4> m_ipv4;
-        std::set<uint32_t> m_netdevice;
-        std::vector<uint32_t> v;      // Buffer of sent packet hashes
+        //ns3::Ptr<ns3::Ipv4> m_ipv4;
+        //std::vector<uint32_t> v;      // Buffer of sent packet hashes
         //std::vector<std::string> vStrings;
-        Timer m_cleanTimer;
-        Time m_cleanIntervall = Time("10s");
-        uint32_t iidout;
+        Time m_cleanInterval = Seconds(CLEAN_UP_TIME);
 
         void RoutingProtocol::SetNetdevicelistener(std::set<uint32_t> listen) {
             m_netdevice = listen;
@@ -79,24 +75,23 @@ NS_LOG_COMPONENT_DEFINE ("smfLog");
         }
 
         void RoutingProtocol::DoDispose() {
+			NS_LOG_DEBUG ("[SMF] "<< Simulator::Now ().GetSeconds () <<" END");
             m_ipv4 = 0;
-             m_cleanTimer.Cancel();
+            m_cleanTimer.Cancel();
         }
+        
         Ptr<Ipv4Route> RoutingProtocol::RouteOutput(Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDevice> oif, Socket::SocketErrno & sockerr) {
             Ptr<Ipv4Route> rtentry = 0;
             /*
             Ipv4Address dst = header.GetDestination ();
             Ipv4Address origin = header.GetSource ();
             Ipv4Address m_mainAddress = getMainLocalAddr();
-
             rtentry = Create<Ipv4Route> ();
             rtentry->SetSource(origin);
             rtentry->SetDestination(dst);
             rtentry->SetGateway(m_mainAddress);
             rtentry->SetOutputDevice(m_ipv4->GetNetDevice (0));*/
-
             return rtentry;
-
         }
 
         /*
@@ -106,7 +101,7 @@ NS_LOG_COMPONENT_DEFINE ("smfLog");
          * Returns TRUE if the item is NEW and add the hash to the list
          *
          */
-        bool RoutingProtocol::checkhash(Ptr<const Packet> p, Ipv4Address origin_ipaddr) {
+        bool RoutingProtocol::isNew(Ptr<const Packet> p, Ipv4Address origin_ipaddr) {
 			// First we make a string  (and then a hash) with the packet and the origin ip adddress
             std::ostringstream oss;
             origin_ipaddr.Print (oss);
@@ -139,13 +134,13 @@ NS_LOG_COMPONENT_DEFINE ("smfLog");
         }
 
         void RoutingProtocol::Clean() {
-            NS_LOG_DEBUG ("[SMF] "<< Simulator::Now ().GetSeconds () <<" node "<< getMainLocalAddr() <<" ERASING HASH TABLE");
+
+            NS_LOG_DEBUG ("[SMF] "<< Simulator::Now ().GetSeconds () <<" node "<< getMainLocalAddr() <<" ERASING hash table " << v.size());
             v.erase(v.begin(), v.begin()+(v.size() / 3));
-            m_cleanTimer.Schedule(m_cleanIntervall);
+            m_cleanTimer.Schedule(Seconds(CLEAN_UP_TIME));
         }
 
         void RoutingProtocol::PrintRoutingTable(Ptr<OutputStreamWrapper> stream) const {
-
         }
 
         bool RoutingProtocol::RouteInput(Ptr<const Packet> p,
@@ -155,7 +150,7 @@ NS_LOG_COMPONENT_DEFINE ("smfLog");
                     MulticastForwardCallback mcb,
                     LocalDeliverCallback lcb,
                     ErrorCallback ecb) {
-
+			//NS_LOG_INFO("[SMF] ");
             NS_ASSERT(m_ipv4 != 0); // Check if input device supports IP
             NS_ASSERT(m_ipv4->GetInterfaceForDevice(idev) >= 0);
 
@@ -198,8 +193,8 @@ NS_LOG_COMPONENT_DEFINE ("smfLog");
                 return true;
             }
 
-            if(checkhash(p,src)){ // If it is NEW
-              if(dst.IsMulticast() || dst.IsLocalMulticast ()){
+            if(isNew(p,src)){ // If it is NEW
+              if(dst.IsMulticast() | dst.IsLocalMulticast ()){
                 Ptr<Ipv4MulticastRoute> mrtentry = new Ipv4MulticastRoute();
                 mrtentry->SetGroup(dst);
                 mrtentry->SetOrigin(src);
@@ -220,28 +215,53 @@ NS_LOG_COMPONENT_DEFINE ("smfLog");
 			  else{      
                 NS_LOG_INFO("[SMF] "<< Simulator::Now ().GetSeconds () 
 					<< " node "<<getMainLocalAddr()
-					<< " REDIRECT TO UPPER ROUTING PROTOCOL");
+					<< " REDIRECT to upper routing protocol");
                 return false;
               }
-            }else{  // If it is not new
+            }
+            else{
+				NS_LOG_INFO("[SMF] "<< Simulator::Now ().GetSeconds () 
+					<< " node "<<this_addr
+					<< " DISCARD from " << src 
+					<< " to "<< dst 
+					<< " via "<< outif 
+					<< " TTL:"<< unsigned(outttl)-1 << " HASH MATCH");
               return true; // Process (discard)
             }
+            NS_LOG_INFO("[SMF] I SHOULDNT BE HERE");
             return false;
         }
 
         void RoutingProtocol::NotifyInterfaceUp(uint32_t i) {
+					NS_LOG_INFO("[SMF] "<< Simulator::Now ().GetSeconds () 
+					<< " node "<<getMainLocalAddr()
+					<< " IFACE " << i << " up ");
         }
 
         void RoutingProtocol::NotifyInterfaceDown(uint32_t i) {
+					NS_LOG_INFO("[SMF] "<< Simulator::Now ().GetSeconds () 
+					<< " node "<<getMainLocalAddr()
+					<< " IFACE " << i << " down ");
         }
 
         void RoutingProtocol::NotifyAddAddress(uint32_t interface, Ipv4InterfaceAddress address) {
+					NS_LOG_INFO("[SMF] "<< Simulator::Now ().GetSeconds () 
+					<< " node "<<getMainLocalAddr()
+					<< " IFACE " << interface << " added addr "<< address);
         }
 
         void RoutingProtocol::NotifyRemoveAddress(uint32_t interface, Ipv4InterfaceAddress address) {
+					NS_LOG_INFO("[SMF] "<< Simulator::Now ().GetSeconds () 
+					<< " node "<<getMainLocalAddr()
+					<< " IFACE " << interface << " removed addr "<< address);
         }
 
         void RoutingProtocol::DoInitialize() {
+					NS_LOG_INFO("[SMF] "<< Simulator::Now ().GetSeconds () 
+					<< " node "<<getMainLocalAddr()
+					<< " START.");
+					m_cleanTimer.Schedule(Seconds(CLEAN_UP_TIME));
+
         }
     }
 

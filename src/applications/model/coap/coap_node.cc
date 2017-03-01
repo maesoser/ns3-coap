@@ -29,7 +29,7 @@ TypeId CoapNode::GetTypeId (void){
     .SetParent<Application> ()
     .SetGroupName("Applications")
     .AddConstructor<CoapNode> ()
-    .AddAttribute ("port", "Port on which we listen for incoming packets.",
+    .AddAttribute ("Port", "Port on which we listen for incoming packets.",
                    UintegerValue (COAP_DEFAULT_PORT),
                    MakeUintegerAccessor (&CoapNode::m_port),
                    MakeUintegerChecker<uint16_t> ())
@@ -209,11 +209,8 @@ void CoapNode::StopApplication (){
         m_dnssocket->Close ();
         m_dnssocket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
       }
-  showResume();
-}
-
-void CoapNode::showResume(){
-
+      m_sendEvent.Cancel(); //!< Event to send the next packet
+	  m_showCache.Cancel();
 }
 
 void CoapNode::HandleRead (Ptr<Socket> socket) {

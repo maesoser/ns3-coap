@@ -52,14 +52,14 @@ namespace ns3 {
             void Clean();
             virtual void DoInitialize(void);
             virtual void DoDispose(void);
-            bool checkhash(Ptr<const Packet> p, Ipv4Address ipaddr);
+            bool isNew(Ptr<const Packet> p, Ipv4Address ipaddr);
             Ipv4Address getMainLocalAddr();
 
         private:
             std::set<uint32_t> m_netdevice;
             std::vector<uint32_t> v;
             Timer m_cleanTimer;
-            Time m_cleanIntervall;
+            Time m_cleanInterval;
             Ptr<Ipv4> m_ipv4;
             uint32_t iidout;
         };

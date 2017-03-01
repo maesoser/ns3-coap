@@ -212,7 +212,7 @@ int main (int argc, char *argv[])
   cmd.AddValue("mcast","1=mcast answers 0=ucast answers",mcastopt);
   cmd.AddValue("cacheinterval","Determines the cache show up time",cacheinterval);
   
-  cmd.AddValue("verbose","Verbosity level 0=ENERGY, 1=LINK, 2=WIFI",verbose);
+  cmd.AddValue("verbose","Verbosity level 0=script+SMF, 1=coap",verbose);
   
   cmd.AddValue("interval","The time to wait between packets. If it is 0-> Server Mode.",interval);
   cmd.AddValue("maxAge","Delete items after max-Age? If >0 it is the age given to the services",maxAge);
@@ -224,11 +224,10 @@ int main (int argc, char *argv[])
 
   // This is not properly written, infact when you put 0, it also prints the
   // power info.
-  LogComponentEnable("smfLog",LOG_LEVEL_ALL);
-
   switch(verbose){
     case 0:
       LogComponentEnable("simple_log", LOG_LEVEL_ALL);  // POWER
+      LogComponentEnable("smfLog",LOG_LEVEL_ALL);
       break;
     case 1:
       LogComponentEnable ("CoapNodeApplication", LOG_LEVEL_INFO);
@@ -237,8 +236,6 @@ int main (int argc, char *argv[])
       LogComponentEnable ("CoapNode_rx", LOG_LEVEL_INFO);
       LogComponentEnable ("CoapNode_cache", LOG_LEVEL_INFO);
       LogComponentEnable ("Coap_mDNS", LOG_LEVEL_INFO);
-      break;
-    case 2:
       break;
     default:
       break;
@@ -328,25 +325,25 @@ int main (int argc, char *argv[])
       break;
     case 1:
       routingList.Add(smf,10);
-      smf.PrintRoutingTableAllEvery(Seconds(2),routingStream);
+      smf.PrintRoutingTableAllEvery(Seconds(5),routingStream);
       m_protocolName = "SMF";
       break;
     case 2:
       routingList.Add(smf,10);
       routingList.Add (olsr, 5);
-      olsr.PrintRoutingTableAllEvery(Seconds(2),routingStream);
+      olsr.PrintRoutingTableAllEvery(Seconds(5),routingStream);
       m_protocolName = "OLSR_SMF";
       break;
     case 3:
       routingList.Add(smf,10);
       routingList.Add (aodv, 5);
-      aodv.PrintRoutingTableAllEvery(Seconds(2),routingStream);
+      aodv.PrintRoutingTableAllEvery(Seconds(5),routingStream);
       m_protocolName = "AODV_SMF";
       break;
     case 4:
       routingList.Add(smf,10);
       routingList.Add (dsdv, 5);
-      dsdv.PrintRoutingTableAllEvery(Seconds(2),routingStream);
+      dsdv.PrintRoutingTableAllEvery(Seconds(5),routingStream);
       m_protocolName = "DSDV_SMF";
       break;
     case 5:
@@ -419,11 +416,18 @@ int main (int argc, char *argv[])
 
   apps = coapnode.Install(nodes);	
   apps.Start (Seconds (0.0));
+  
+  NS_LOG_INFO ("SIM TIME: " << runtime);
+
   if(runtime>900){
     apps.Stop (Seconds (runtime - 300));
+    NS_LOG_INFO ("APPTIME: " << runtime -300);
   }else{
-    apps.Stop (Seconds (runtime/3));
+    apps.Stop (Seconds ((2*runtime)/3));
+    NS_LOG_INFO ("APPTIME: " << (2*runtime)/3);
+
   }
+  
 
   /*
   CoapServerHelper coapserver (5683);
