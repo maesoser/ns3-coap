@@ -209,7 +209,7 @@ class CoapNode : public Application{
 			//Deal wioth the scheduling thing and all that stuff
 			void SendDiscovery();
 			void sendCache(Ipv4Address ip, int port, uint16_t messageid);
-			void sendMDnsCache(Query query);
+			void sendMDnsCache(Query query, Address from);
 			void ping(Ipv4Address ip, int port);
 			void sendCachePart(Ipv4Address ip, int port, uint16_t messageid,std::string payloadstr);
 			// Send responses (Taking care of messageid and changing some other things)
@@ -250,7 +250,7 @@ class CoapNode : public Application{
 			uint32_t m_stime; //! Is it mcast or ucast answer?
 			uint32_t m_cacheinterval;
 			
-			uint32_t m_answType; //! Is it mcast or ucast answer?
+			uint32_t m_mcast; //! Is it mcast or ucast answer?
 			uint16_t m_dataType; //! Is it get disco or get temp
 			uint16_t m_port; //!< Port on which we listen for incoming packets.
 			Time m_interval; //!< Packet inter-send time
@@ -266,7 +266,6 @@ class CoapNode : public Application{
 			};
 
 			std::vector<eventItem> m_idlist;
-
 
 			uint8_t *m_data; //!< packet payload data
 			Ptr<Socket> m_socket; //!< IPv4 Socket

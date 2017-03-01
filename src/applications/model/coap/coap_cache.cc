@@ -115,7 +115,7 @@ void CoapNode::saveCache(){
   }
 }
 
-void CoapNode::sendMDnsCache(Query query){
+void CoapNode::sendMDnsCache(Query query, Address from){
 	//checkCache();
 	deleteOutdated();
 	NS_LOG_INFO("MDNS_CACHE_SEND");
@@ -154,7 +154,12 @@ void CoapNode::sendMDnsCache(Query query){
 			}
 		}
 	}
-	cmdns.Send(m_dnssocket,dnsmcast,m_txTrace);
+	if(m_mcast){
+		cmdns.Send(m_dnssocket,dnsmcast,m_txTrace);
+	}
+	else {
+		cmdns.Send(m_dnssocket,InetSocketAddress::ConvertFrom(from).GetIpv4(),m_txTrace);
+	}
 }
 bool CoapNode::updateEntry(Ipv4Address addr,std::string url, uint32_t maxAge){
 	size_t prophash = std::hash<std::string>()(Ipv4AddressToString(addr)+""+url);

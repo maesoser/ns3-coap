@@ -130,11 +130,26 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
           }
           if(url.find("well-known/core")!= std::string::npos){
             NS_LOG_INFO("\t|-> DISCOVERY REQUEST");
-            uint16_t distime = 3600;
-            uint64_t maxtime = 1000*CONF_WAIT_REPL*(3600.0/(3600.0+distime*m_cache.size()));
-            uint64_t dtime = Normal(maxtime);
-            EventId m_sendDiscoResponse = Simulator::Schedule (MilliSeconds(dtime), &CoapNode::sendCache, this,InetSocketAddress::ConvertFrom (from).GetIpv4(), InetSocketAddress::ConvertFrom(from).GetPort(),packet.messageid);
-			      addID(packet.messageid,m_sendDiscoResponse);
+            
+            if(m_stime){
+				uint16_t distime = 3600;
+				uint64_t maxtime = 1000*CONF_WAIT_REPL*(3600.0/(3600.0+distime*m_cache.size()));
+				uint64_t dtime = Normal(maxtime);
+				EventId m_sendDiscoResponse = Simulator::Schedule (
+					MilliSeconds(dtime),
+					&CoapNode::sendCache,
+					this,
+					InetSocketAddress::ConvertFrom (from).GetIpv4(),
+					InetSocketAddress::ConvertFrom(from).GetPort(),
+					packet.messageid);
+				addID(packet.messageid,m_sendDiscoResponse);
+
+			}else{
+				sendCache(
+					InetSocketAddress::ConvertFrom (from).GetIpv4(),
+					InetSocketAddress::ConvertFrom(from).GetPort(),
+					packet.messageid);
+			}
           }
       }
       else if(packet.type == COAP_CON && packet.code == 0x00){    // Answer to an ack

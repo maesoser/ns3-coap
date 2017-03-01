@@ -35,7 +35,7 @@ TypeId CoapNode::GetTypeId (void){
                    MakeUintegerChecker<uint16_t> ())
     .AddAttribute ("mcast","Should I answer in multicast mode?",
                   UintegerValue (0),
-                  MakeUintegerAccessor (&CoapNode::m_answType),
+                  MakeUintegerAccessor (&CoapNode::m_mcast),
                   MakeUintegerChecker<uint32_t> ())
     .AddAttribute ("startDelay","Delay when you start the app",
                    UintegerValue (30),
@@ -233,7 +233,7 @@ void CoapNode::HandleDns(Ptr<Socket> socket){
     MDns my_mdns(m_dnssocket,m_txTrace);
     int res = my_mdns.recvdns(dnspacket,from);
     if(res==1) {  // Recibe Query
-   	  sendMDnsCache(my_mdns.queries[0]);
+   	  sendMDnsCache(my_mdns.queries[0],from);
    	  //my_mdns.Clear();
     }
     if(res==2){  // Recibe Answer, tiene que procesar la Query

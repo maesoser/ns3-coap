@@ -49,8 +49,8 @@ void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid){
 	  }
   }
   result = result +"</temp>;title=\"This is the local temperature sensor\"";
-  sendCachePart(ip,port, messageid,result);
-
+  if(m_mcast)	sendCachePart(m_mcastAddr,port, messageid,result);
+  else	sendCachePart(ip,port, messageid,result);
 }
 
 uint16_t CoapNode::sendCoap(Ipv4Address ip, int port, char *url, COAP_TYPE type, COAP_METHOD method, uint8_t *token, uint8_t tokenlen, uint8_t *payload, uint32_t payloadlen) {
@@ -174,15 +174,26 @@ void CoapNode::sendmDnsRequest(){
    */
    if (Ipv4Address::IsMatchingType (dnsmcast))
      {
-       NS_LOG_INFO (Simulator::Now ().GetSeconds () << "s "<< GetAddr() <<" send " << my_mdns.data_size << " bytes to " << Ipv4Address::ConvertFrom (dnsmcast) << ":" << MDNS_MCAST_ADDR);
+       NS_LOG_INFO (Simulator::Now ().GetSeconds ()
+		   << "s "<< GetAddr()
+		   <<" send " << my_mdns.data_size
+		   << " bytes to " << Ipv4Address::ConvertFrom (dnsmcast)
+		   << ":" << MDNS_MCAST_ADDR);
      }
    else if (Ipv6Address::IsMatchingType (dnsmcast))
      {
-       NS_LOG_INFO (Simulator::Now ().GetSeconds () << "s send " << my_mdns.data_size << " bytes to " << Ipv6Address::ConvertFrom (dnsmcast) << ":" << MDNS_MCAST_ADDR);
+       NS_LOG_INFO (Simulator::Now ().GetSeconds ()
+		   << "s send " << my_mdns.data_size
+		   << " bytes to " << Ipv6Address::ConvertFrom (dnsmcast)
+		   << ":" << MDNS_MCAST_ADDR);
      }
    else if (InetSocketAddress::IsMatchingType (dnsmcast))
      {
-       NS_LOG_INFO (Simulator::Now ().GetSeconds () << "s send " << my_mdns.data_size << " bytes to " << InetSocketAddress::ConvertFrom (dnsmcast).GetIpv4 () << ":" << InetSocketAddress::ConvertFrom (dnsmcast).GetPort ());
+		NS_LOG_INFO (Simulator::Now ().GetSeconds ()
+			<< "s send "
+			<< my_mdns.data_size 
+			<< " bytes to " << InetSocketAddress::ConvertFrom (dnsmcast).GetIpv4 ()
+			<< ":" << InetSocketAddress::ConvertFrom (dnsmcast).GetPort ());
      }
    else if (Inet6SocketAddress::IsMatchingType (dnsmcast))
      {
