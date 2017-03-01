@@ -29,14 +29,14 @@ TypeId CoapNode::GetTypeId (void){
     .SetParent<Application> ()
     .SetGroupName("Applications")
     .AddConstructor<CoapNode> ()
-    .AddAttribute ("Port", "Port on which we listen for incoming packets.",
+    .AddAttribute ("port", "Port on which we listen for incoming packets.",
                    UintegerValue (COAP_DEFAULT_PORT),
                    MakeUintegerAccessor (&CoapNode::m_port),
                    MakeUintegerChecker<uint16_t> ())
-    .AddAttribute ("multicastResponse","Should I answer in multicast mode?",
+    .AddAttribute ("mcast","Should I answer in multicast mode?",
                   UintegerValue (0),
                   MakeUintegerAccessor (&CoapNode::m_answType),
-                  MakeUintegerChecker<uint16_t> ())
+                  MakeUintegerChecker<uint8_t> ())
     .AddAttribute ("startDelay","Delay when you start the app",
                    UintegerValue (30),
                    MakeUintegerAccessor (&CoapNode::m_startDelay),
@@ -53,7 +53,11 @@ TypeId CoapNode::GetTypeId (void){
                    UintegerValue (30),
                    MakeUintegerAccessor (&CoapNode::m_cachesize),
                    MakeUintegerChecker<uint16_t> ())
-    .AddAttribute ("useMaxAge","Delete items after max-Age? If >0 it is the age given to the services",
+	.AddAttribute ("cacheInterval","Interval in which the cache is showed and checked",
+                   UintegerValue (30),
+                   MakeUintegerAccessor (&CoapNode::m_cacheinterval),
+                   MakeUintegerChecker<uint16_t> ())
+    .AddAttribute ("useMaxAge","Delete items after max-Age? If >0 it is the age given to the services the node has",
 					UintegerValue (60),
                   MakeUintegerAccessor (&CoapNode::m_ageTime),
                   MakeUintegerChecker<uint32_t> ())
@@ -64,12 +68,12 @@ TypeId CoapNode::GetTypeId (void){
 		.AddAttribute ("etag","If it is 1, it uses etag to avoid data retransmissions",
 					UintegerValue (0),
                   MakeUintegerAccessor (&CoapNode::m_etag),
-                  MakeUintegerChecker<uint32_t> ())
+                  MakeUintegerChecker<uint8_t> ())
 		.AddAttribute ("stime","If it is 1, it uses smart tx time to save transmissions",
 					UintegerValue (0),
                   MakeUintegerAccessor (&CoapNode::m_stime),
-                  MakeUintegerChecker<uint32_t> ())
-	.AddAttribute ("ping","If it is 1, coAP send a ping every time it receives a cache entry.",
+                  MakeUintegerChecker<uint8_t> ())
+	.AddAttribute ("ping","If it is 1, coAP send a ping when he shows his cache entries",
 					UintegerValue (0),
 					MakeUintegerAccessor (&CoapNode::m_activatePing),
 					MakeUintegerChecker<uint32_t> ())
@@ -185,7 +189,7 @@ void CoapNode::StartApplication (void){
     m_petitionLimit = false;
   }
   //if(m_cachesize!=0){	I still want to see cache, even when I do not sent cache elements and just my elements!!
-    m_showCache = Simulator::Schedule (Seconds(45), &CoapNode::showCache, this);
+    m_showCache = Simulator::Schedule (Seconds(Normal(m_cacheinterval)), &CoapNode::showCache, this);
   //}
 
 }

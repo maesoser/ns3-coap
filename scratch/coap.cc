@@ -320,34 +320,34 @@ int main (int argc, char *argv[])
   switch (protocol)
   {
     case 0:
-      routingList.Add(smf,10);
       m_protocolName = "NONE";
       break;
     case 1:
-      routingList.Add (olsr, 10);
-      olsr.PrintRoutingTableAllEvery(Seconds(2),routingStream);
-      m_protocolName = "OLSR";
-      break;
-    case 2:
-      routingList.Add (aodv, 5);
-      routingList.Add(smf,10);
-      aodv.PrintRoutingTableAllEvery(Seconds(2),routingStream);
-      m_protocolName = "AODV";
-      break;
-    case 3:
-      routingList.Add (dsdv, 5);
-      routingList.Add(smf,10);
-      dsdv.PrintRoutingTableAllEvery(Seconds(2),routingStream);
-      m_protocolName = "DSDV";
-      break;
-    case 4:
-      m_protocolName = "DSR";
-      dsrMain.Install (dsr, nodes);
-      break;
-    case 5:
       routingList.Add(smf,10);
       smf.PrintRoutingTableAllEvery(Seconds(2),routingStream);
       m_protocolName = "SMF";
+      break;
+    case 2:
+      routingList.Add(smf,10);
+      routingList.Add (olsr, 5);
+      olsr.PrintRoutingTableAllEvery(Seconds(2),routingStream);
+      m_protocolName = "OLSR_SMF";
+      break;
+    case 3:
+      routingList.Add(smf,10);
+      routingList.Add (aodv, 5);
+      aodv.PrintRoutingTableAllEvery(Seconds(2),routingStream);
+      m_protocolName = "AODV_SMF";
+      break;
+    case 4:
+      routingList.Add(smf,10);
+      routingList.Add (dsdv, 5);
+      dsdv.PrintRoutingTableAllEvery(Seconds(2),routingStream);
+      m_protocolName = "DSDV_SMF";
+      break;
+    case 5:
+      m_protocolName = "DSR";
+      dsrMain.Install (dsr, nodes);
       break;
     default:
       NS_FATAL_ERROR ("No such protocol:" << protocol);

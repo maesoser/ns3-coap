@@ -247,10 +247,11 @@ class CoapNode : public Application{
 
 			void checkCache();
 
-			uint16_t m_etag; //! Is it mcast or ucast answer?
-			uint16_t m_stime; //! Is it mcast or ucast answer?
-
-			uint16_t m_answType; //! Is it mcast or ucast answer?
+			uint8_t m_etag; //! Is it mcast or ucast answer?
+			uint8_t m_stime; //! Is it mcast or ucast answer?
+			uint16_t m_cacheinterval;
+			
+			uint8_t m_answType; //! Is it mcast or ucast answer?
 			uint16_t m_dataType; //! Is it get disco or get temp
 			uint16_t m_port; //!< Port on which we listen for incoming packets.
 			Time m_interval; //!< Packet inter-send time

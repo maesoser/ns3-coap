@@ -96,7 +96,7 @@ void CoapNode::showCache(){
       NS_LOG_INFO("CACHE_DUMP,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<",EMP");
   }
 	saveCache();
-  m_showCache = Simulator::Schedule (Seconds(30), &CoapNode::showCache, this);
+    m_showCache = Simulator::Schedule (Seconds(m_cacheinterval), &CoapNode::showCache, this);
 	checkCache();
 	deleteOutdated();
 }
