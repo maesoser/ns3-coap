@@ -220,7 +220,7 @@ int main (int argc, char *argv[])
 
   // This is not properly written, infact when you put 0, it also prints the
   // power info.
-LogComponentEnable("smfLog",LOG_LEVEL_ALL);
+  LogComponentEnable("smfLog",LOG_LEVEL_ALL);
 
   switch(verbose){
     case 0:
@@ -320,6 +320,7 @@ LogComponentEnable("smfLog",LOG_LEVEL_ALL);
   switch (protocol)
   {
     case 0:
+      routingList.Add(smf,10);
       m_protocolName = "NONE";
       break;
     case 1:

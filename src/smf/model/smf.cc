@@ -100,18 +100,20 @@ NS_LOG_COMPONENT_DEFINE ("smfLog");
         }
 
         /*
-         * checkhash(Ptr<const Packet> p)
+         * checkhash(PPtr<const Packet> p, Ipv4Address ipaddr)
          *
          * Returns FALSE if the item has been already SENT
-         * Returns TRUE if the item is NEW
+         * Returns TRUE if the item is NEW and add the hash to the list
          *
          */
-        bool RoutingProtocol::checkhash(Ptr<const Packet> p, Ipv4Address ipaddr) {
+        bool RoutingProtocol::checkhash(Ptr<const Packet> p, Ipv4Address origin_ipaddr) {
+			// First we make a string  (and then a hash) with the packet and the origin ip adddress
             std::ostringstream oss;
-            ipaddr.Print (oss);
+            origin_ipaddr.Print (oss);
             std::string stringToHash = oss.str()+(p->ToString());
             uint32_t hash = Hash32(stringToHash);
-            uint32_t nodeid = m_ipv4->GetObject<Node>()-> GetId();
+            
+            //uint32_t nodeid = m_ipv4->GetObject<Node>()-> GetId();
             if (std::find(v.begin(), v.end(), hash) == v.end()) {
                 // The element is not on the list
                 //NS_LOG_DEBUG (Simulator::Now ().GetSeconds () <<" node "<<getMainLocalAddr()<<" PACKET HASH: "<< hash << " (NEW)");
@@ -123,6 +125,7 @@ NS_LOG_COMPONENT_DEFINE ("smfLog");
                 return false;
             }
         }
+        
         Ipv4Address RoutingProtocol::getMainLocalAddr(){
             Ipv4Address loopback ("127.0.0.1");
             for (uint32_t i = 0; i < m_ipv4->GetNInterfaces (); i++){
@@ -136,7 +139,7 @@ NS_LOG_COMPONENT_DEFINE ("smfLog");
         }
 
         void RoutingProtocol::Clean() {
-            NS_LOG_DEBUG ("ERASING HASH TABLE");
+            NS_LOG_DEBUG ("[SMF] "<< Simulator::Now ().GetSeconds () <<" node "<< getMainLocalAddr() <<" ERASING HASH TABLE");
             v.erase(v.begin(), v.begin()+(v.size() / 3));
             m_cleanTimer.Schedule(m_cleanIntervall);
         }
@@ -157,66 +160,72 @@ NS_LOG_COMPONENT_DEFINE ("smfLog");
             NS_ASSERT(m_ipv4->GetInterfaceForDevice(idev) >= 0);
 
             Ipv4Address dst = header.GetDestination ();     // Destination Address
-            Ipv4Address origin = header.GetSource ();       // Origin address
-            Ipv4Address m_mainAddress = getMainLocalAddr(); // Address of this node
+            Ipv4Address src = header.GetSource ();       // Source address
+            Ipv4Address this_addr = getMainLocalAddr(); // Address of this node
             uint32_t outif = m_ipv4->GetInterfaceForDevice(idev);
             uint8_t outttl = header.GetTtl();
-            if (origin==m_mainAddress){ //Consume self-originated packets
+            
+            //Consume self-originated packets
+            if (src==this_addr){ 
+				NS_LOG_INFO("[SMF] "<< Simulator::Now ().GetSeconds () 
+					<< " node "<<this_addr
+					<< " DISCARD from "<< src 
+					<< " to "<< dst
+					<< " via "<< outif 
+					<< " TTL:"<< unsigned(outttl)-1);
                 return true;
             }
-            if(dst==origin){  // Consume loop packets
+            
+            // Consume loop packets
+            if(dst==src){  
+			  NS_LOG_INFO("[SMF] "<< Simulator::Now ().GetSeconds () 
+				  << " node "<<this_addr
+				  << " DISCARD from "<< src 
+				  << " to "<< dst
+				  << " via "<< outif 
+				  << " TTL:"<< unsigned(outttl)-1);
               return true;
             }
-            if(outttl<1){ // Consume packets with no ttl
+            
+            // Consume packets with no ttl
+            if(outttl<1){ 
+				NS_LOG_INFO("[SMF] "<< Simulator::Now ().GetSeconds () 
+					<< " node "<<this_addr
+					<< " DISCARD from "<< src 
+					<< " to "<< dst
+					<< " via "<< outif 
+					<< " TTL: 0");
                 return true;
             }
 
-            if(checkhash(p,origin)){ // If it is NEW
-              uint32_t nodeid = m_ipv4->GetObject<Node>()->GetId();
-              if(dst.IsMulticast()){
+            if(checkhash(p,src)){ // If it is NEW
+              if(dst.IsMulticast() || dst.IsLocalMulticast ()){
                 Ptr<Ipv4MulticastRoute> mrtentry = new Ipv4MulticastRoute();
                 mrtentry->SetGroup(dst);
-                mrtentry->SetOrigin(origin);
+                mrtentry->SetOrigin(src);
                 mrtentry->SetOutputTtl(outif, outttl-1);
                 mrtentry->SetParent (outif);
-                //NS_LOG_INFO("["<<nodeid<<"] FORWARD from " << mrtentry->GetOrigin() << " to "<< mrtentry->GetGroup()<< " via "<< outif << " TTL:"<< unsigned(outttl)-1);
-                NS_LOG_INFO(Simulator::Now ().GetSeconds () <<" node "<<getMainLocalAddr()<<" FORWARD from " << mrtentry->GetOrigin() << " to "<< mrtentry->GetGroup()<< " via "<< outif << " TTL:"<< unsigned(outttl)-1);
+                
+                NS_LOG_INFO("[SMF] "<< Simulator::Now ().GetSeconds () 
+					<< " node "<<this_addr
+					<< " FORWARD from " << src 
+					<< " to "<< dst 
+					<< " via "<< outif 
+					<< " TTL:"<< unsigned(outttl)-1);
+					
                 mcb(mrtentry, p, header);
                 return true;
-              }else if(dst.IsLocalMulticast ()){
-                Ptr<Ipv4MulticastRoute> mrtentry = new Ipv4MulticastRoute();
-                mrtentry->SetGroup(dst);
-                mrtentry->SetOrigin(origin);
-                mrtentry->SetOutputTtl(outif, outttl-1);
-                mrtentry->SetParent (outif);
-                //NS_LOG_INFO("["<<nodeid<<"] FORWARD from " << mrtentry->GetOrigin() << " to "<< mrtentry->GetGroup()<< " via "<< outif << " TTL:"<< unsigned(outttl)-1);
-                NS_LOG_INFO(Simulator::Now ().GetSeconds () <<" node "<<getMainLocalAddr()<<" FORWARD from " << mrtentry->GetOrigin() << " to "<< mrtentry->GetGroup()<< " via "<< outif << " TTL:"<< unsigned(outttl)-1);
-                mcb(mrtentry, p, header);
-                return true;
-              }else{      // If it is unicast, send through multicast channel
-                NS_LOG_INFO("["<< nodeid <<"] FORWARD TO UPPER ROUTING DIRECTIVE");
+			  }
+			  // If it is unicast, send through multicast channel
+			  else{      
+                NS_LOG_INFO("[SMF] "<< Simulator::Now ().GetSeconds () 
+					<< " node "<<getMainLocalAddr()
+					<< " REDIRECT TO UPPER ROUTING PROTOCOL");
                 return false;
               }
             }else{  // If it is not new
               return true; // Process (discard)
             }
-            /*if (dst.IsMulticast()) {    // If it is multicast
-                Ptr<Ipv4MulticastRoute> mrtentry = LookupStatic(origin,dst, outif, outttl);
-                if (mrtentry){
-                    if(checkhash(p,origin)) { // SI EL PAQUETE ES NUEVO
-                        uint32_t nodeid = m_ipv4->GetObject<Node>()->GetId();
-                        NS_LOG_INFO("["<<nodeid<<"] FORWARD from " << mrtentry->GetOrigin() << " to "<< mrtentry->GetGroup()<< " via "<< outif << " TTL:"<< unsigned(outttl)-1);
-                        //QUIZAS TENGO QUE CAMBIAR EL PUEERTO?
-                        //mcb(mrtentry, p, header);
-                        return false;
-                    }
-                    else{
-                        // SI EL PAQUETE ES VIEJO, YO ME OCUPO Y ME LO CARGO
-                        return true;
-                    }
-                }
-
-            }*/
             return false;
         }
 
