@@ -180,6 +180,10 @@ int main (int argc, char *argv[])
   uint32_t pingopt = 0;
   uint32_t cacheopt = 0;
   uint32_t mcastopt = 0;
+  uint32_t cacheinterval = 30;
+  uint32_t etagopt = 0;
+  uint32_t stimeopt = 0;
+
   // Routing Helpers
   smfHelper smf;
   AodvHelper aodv;
@@ -206,7 +210,7 @@ int main (int argc, char *argv[])
   cmd.AddValue("ping","1=ping on 0=cping off",pingopt);
   cmd.AddValue("cache","1=cache on 0=cache off",cacheopt);
   cmd.AddValue("mcast","1=mcast answers 0=ucast answers",mcastopt);
-  
+  cmd.AddValue("cacheinterval","Determines the cache show up time",cacheinterval);
   
   cmd.AddValue("verbose","Verbosity level 0=ENERGY, 1=LINK, 2=WIFI",verbose);
   
@@ -404,16 +408,16 @@ int main (int argc, char *argv[])
   
   // Interval between discoveries
   coapnode.SetAttribute ("interval", TimeValue (Seconds (interval)));
-  coapnode.SetAttribute ("multicastResponse", UintegerValue (mcastopt));
+  coapnode.SetAttribute ("mcast", UintegerValue (mcastopt));
   if (cacheopt == 0)	coapnode.SetAttribute ("cache", UintegerValue (0));
-  
-  // default maxAge
-  coapnode.SetAttribute ("useMaxAge",UintegerValue (maxAge));
+  coapnode.SetAttribute ("useMaxAge",UintegerValue (maxAge));   // default maxAge
   coapnode.SetAttribute ("mDNS",UintegerValue(mDnsOn));
-  
-  // Tha's useful if you want to verify pings
-  coapnode.SetAttribute ("ping",UintegerValue(pingopt));
-  apps = coapnode.Install(nodes);
+  coapnode.SetAttribute ("ping",UintegerValue(pingopt));	  // Tha's useful if you want to verify pings
+  coapnode.SetAttribute ("etag",UintegerValue(etagopt));	  
+  coapnode.SetAttribute ("stime",UintegerValue(stimeopt));	 
+  coapnode.SetAttribute ("cacheInterval",UintegerValue(cacheinterval));	  // Tha's useful if you want to verify pings
+
+  apps = coapnode.Install(nodes);	
   apps.Start (Seconds (0.0));
   if(runtime>900){
     apps.Stop (Seconds (runtime - 300));

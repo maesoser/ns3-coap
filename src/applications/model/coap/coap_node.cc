@@ -36,7 +36,7 @@ TypeId CoapNode::GetTypeId (void){
     .AddAttribute ("mcast","Should I answer in multicast mode?",
                   UintegerValue (0),
                   MakeUintegerAccessor (&CoapNode::m_answType),
-                  MakeUintegerChecker<uint8_t> ())
+                  MakeUintegerChecker<uint32_t> ())
     .AddAttribute ("startDelay","Delay when you start the app",
                    UintegerValue (30),
                    MakeUintegerAccessor (&CoapNode::m_startDelay),
@@ -56,7 +56,7 @@ TypeId CoapNode::GetTypeId (void){
 	.AddAttribute ("cacheInterval","Interval in which the cache is showed and checked",
                    UintegerValue (30),
                    MakeUintegerAccessor (&CoapNode::m_cacheinterval),
-                   MakeUintegerChecker<uint16_t> ())
+                   MakeUintegerChecker<uint32_t> ())
     .AddAttribute ("useMaxAge","Delete items after max-Age? If >0 it is the age given to the services the node has",
 					UintegerValue (60),
                   MakeUintegerAccessor (&CoapNode::m_ageTime),
@@ -68,11 +68,11 @@ TypeId CoapNode::GetTypeId (void){
 		.AddAttribute ("etag","If it is 1, it uses etag to avoid data retransmissions",
 					UintegerValue (0),
                   MakeUintegerAccessor (&CoapNode::m_etag),
-                  MakeUintegerChecker<uint8_t> ())
+                  MakeUintegerChecker<uint32_t> ())
 		.AddAttribute ("stime","If it is 1, it uses smart tx time to save transmissions",
 					UintegerValue (0),
                   MakeUintegerAccessor (&CoapNode::m_stime),
-                  MakeUintegerChecker<uint8_t> ())
+                  MakeUintegerChecker<uint32_t> ())
 	.AddAttribute ("ping","If it is 1, coAP send a ping when he shows his cache entries",
 					UintegerValue (0),
 					MakeUintegerAccessor (&CoapNode::m_activatePing),
