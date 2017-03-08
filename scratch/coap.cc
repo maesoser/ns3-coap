@@ -183,7 +183,6 @@ int main (int argc, char *argv[])
   uint32_t cacheinterval = 30;
   uint32_t etagopt = 0;
   uint32_t stimeopt = 0;
-
   // Routing Helpers
   smfHelper smf;
   AodvHelper aodv;
@@ -209,6 +208,7 @@ int main (int argc, char *argv[])
   cmd.AddValue("mdns","1=mDNS 0=coAP discovery",mDnsOn);
   cmd.AddValue("ping","1=ping on 0=cping off",pingopt);
   cmd.AddValue("cache","1=cache on 0=cache off",cacheopt);
+  cmd.AddValue("stime","1=smart answer time on",stimeopt);
   cmd.AddValue("mcast","1=mcast answers 0=ucast answers",mcastopt);
   cmd.AddValue("cacheinterval","Determines the cache show up time",cacheinterval);
   
