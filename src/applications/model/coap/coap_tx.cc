@@ -30,8 +30,9 @@ uint16_t CoapNode::sendResponse(Ipv4Address ip, int port, uint16_t messageid, ch
 }
 
 void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid){
+  if(checkIDCanceled(messageid)) return;
   std::string result = "";
-  if(m_cachesize!=0){
+  if(m_cacheopt!=0){
 	  deleteOutdated();
 	  if(!m_cache.empty()){
 		u_int32_t i_actual = 0;
@@ -49,6 +50,7 @@ void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid){
 	  }
   }
   result = result +"</temp>;title=\"This is the local temperature sensor\"";
+  
   if(m_mcast)	sendCachePart(m_mcastAddr,port, messageid,result);
   else	sendCachePart(ip,port, messageid,result);
 }

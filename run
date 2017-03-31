@@ -1,36 +1,16 @@
 #!/bin/bash
 
 if [ $1 = "help" ]; then
-    echo ""
-    echo "THIS IS A STATIC HELP OUTPUT - Real script could could have changed since this snapshot."
-    echo ""
-    echo "Script Arguments:"
-    echo "    run"
-    echo "    clean"
-    echo ""
-    echo "Program Arguments:"
-    echo "   --distance:     Distance between nodes (m) [500]"
-    echo "   --speed:        Speed of the nodes (m/s) [0]"
-    echo "   --gain:         Rx Gain (dB) [-10]"
-    echo "   --txpower:      Transmission Power (dB) [13]"
-    echo "   --energy:       Initial Energy (J)) [300]"
-    echo "   --voltage:      Battery voltage (v) [5]"
-    echo "   --idlecurrent:  Current consumed when iddle (A) [0.015]"
-    echo "   --txcurrent:    Current consumed when transmitting (A) [0.12]"
-    echo "   --routing:      Current routing protocol 0=NONE,1=OLSR,2=SMF-AODV,3=SMF-DSDV,4=DSR 5=SMF-OLSR [0]"
-    echo "   --verbose:      Verbosity level 0=ENERGY, 1=LINK, 2=WIFI [0]"
-    echo "   --interval:     The time to wait between packets. If it is 0-> Server Mode. [60]"
-    echo "   --maxAge:       Delete items after max-Age? If >0 it is the age given to the services [90]"
-    echo "   --runtime:      number of seconds the simulatiun will last [3000]"
-    echo "   --mdns:         1=mDNS 0=coAP discovery [0]"
-    echo " "
-    echo "General Arguments:"
-    echo "   --PrintGlobals:              Print the list of globals."
-    echo "   --PrintGroups:               Print the list of groups."
-    echo "   --PrintGroup=[group]:        Print all TypeIds of group."
-    echo "   --PrintTypeIds:              Print all TypeIds."
-    echo "   --PrintAttributes=[typeid]:  Print all attributes of typeid."
-    echo "   --PrintHelp:                 Print this help message."
+		echo ""
+		echo "THIS IS A STATIC HELP OUTPUT - Real script could could have changed since this snapshot."
+		echo ""
+		echo "Script Arguments:"
+		echo "    run"
+		echo "    clean"
+		echo "    help"
+		echo ""
+		./waf --run "coap --PrintHelp"
+		exit
 
 elif [ $1 = "clean" ]; then
     echo Removing stored .zip files
@@ -45,11 +25,18 @@ elif [ $1 = "clean" ]; then
     rm output.log
 
 else
-  echo Starting simulation
+  echo removing old trace files
+  rm energy_*
+  rm *.pcap
+  rm coap_trace.tr
+  rm coap_animation.xml
+  rm state_*
+  rm routetables
+  rm output.log
+  echo Starting simulation:
   a="$(echo "$*" | tr ' ' _ | tr = _ | tr -d -)"
   b="$(date +%s)"
   c="_"
-  echo Simulating...
   echo Arguments: $*
   ./waf --run "coap $*" &> output.log
   echo Done

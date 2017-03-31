@@ -204,9 +204,9 @@ int main (int argc, char *argv[])
   cmd.AddValue("idlecurrent","Current consumed when iddle (A)",idleCurrent);
   cmd.AddValue("txcurrent","Current consumed when transmitting (A)",txCurrent);
   
-  cmd.AddValue("routing","Current routing protocol 0=NONE,1=OLSR,2=SMF-AODV,3=SMF-DSDV,4=DSR 5=SMF-OLSR",protocol);
+  cmd.AddValue("routing","Current routing protocol 0=NONE,1=SMF,2=OLSR_SMF,3=OLSR,4=AODV_SMF 5=DSDV_SMF",protocol);
   cmd.AddValue("mdns","1=mDNS 0=coAP discovery",mDnsOn);
-  cmd.AddValue("ping","1=ping on 0=cping off",pingopt);
+  cmd.AddValue("ping","1=ping on 0=ping off",pingopt);
   cmd.AddValue("cache","1=cache on 0=cache off",cacheopt);
   cmd.AddValue("stime","1=smart answer time on",stimeopt);
   cmd.AddValue("mcast","1=mcast answers 0=ucast answers",mcastopt);
@@ -214,12 +214,11 @@ int main (int argc, char *argv[])
   
   cmd.AddValue("verbose","Verbosity level 0=script+SMF, 1=coap",verbose);
   
-  cmd.AddValue("interval","The time to wait between packets. If it is 0-> Server Mode.",interval);
-  cmd.AddValue("maxAge","Delete items after max-Age? If >0 it is the age given to the services",maxAge);
-  cmd.AddValue("runtime","number of seconds the simulatiun will last",runtime);
+  cmd.AddValue("interval","The time to wait between requests. If it is 0-> Server Mode.",interval);
+  cmd.AddValue("maxAge","Delete items after max-Age? If >0 it is the defaultage given to the services",maxAge);
+  cmd.AddValue("runtime","number of seconds the simulation will last",runtime);
   
   cmd.Parse (argc, argv);
-
 
 
   // This is not properly written, infact when you put 0, it also prints the
@@ -335,18 +334,23 @@ int main (int argc, char *argv[])
       m_protocolName = "OLSR_SMF";
       break;
     case 3:
+      routingList.Add (olsr, 10);
+      olsr.PrintRoutingTableAllEvery(Seconds(5),routingStream);
+      m_protocolName = "OLSR";
+      break;
+    case 4:
       routingList.Add(smf,10);
       routingList.Add (aodv, 5);
       aodv.PrintRoutingTableAllEvery(Seconds(5),routingStream);
       m_protocolName = "AODV_SMF";
       break;
-    case 4:
+    case 5:
       routingList.Add(smf,10);
       routingList.Add (dsdv, 5);
       dsdv.PrintRoutingTableAllEvery(Seconds(5),routingStream);
       m_protocolName = "DSDV_SMF";
       break;
-    case 5:
+    case 6:
       m_protocolName = "DSR";
       dsrMain.Install (dsr, nodes);
       break;

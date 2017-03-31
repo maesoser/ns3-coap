@@ -78,6 +78,7 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
               }
           }
           if(packet.payloadlen!=0){
+			// STIME
             delID(packet.messageid);
             std::string payloadStr(packet.payload,packet.payload + packet.payloadlen);
             std::vector<std::string> vect = split(payloadStr,',');
@@ -94,12 +95,12 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
                 Ipv4Address sip(split(vname,'/')[0].c_str());
                 std::string vser = split(vname,'/')[1];
                 NS_LOG_INFO("\t|-> URL: "<<sip<<" Service:"<< vser);
-								if (addEntry(sip,vser,recvAge)==false){
-									// If the sender is the same as the one depicted on the cache message, update it TTL
-									if (sip == InetSocketAddress::ConvertFrom(from).GetIpv4()){
-										updateEntry(sip, vser, recvAge);
-									}
-								}
+		if (addEntry(sip,vser,recvAge)==false){
+			// If the sender is the same as the one depicted on the cache message, update it TTL
+			if (sip == InetSocketAddress::ConvertFrom(from).GetIpv4()){
+				updateEntry(sip, vser, recvAge);
+			}
+		}
                 //if(m_activatePing) ping(sip,COAP_DEFAULT_PORT);
               }else{
                 NS_LOG_INFO("\t|-> URL: Localhost Service:"<< vname);
@@ -108,7 +109,6 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
               }
             }
           }
-
       }
       else if (packet.type == COAP_CON && packet.code != 0x00) { // It is a request
           // call endpoint url function
@@ -130,27 +130,27 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
           }
           if(url.find("well-known/core")!= std::string::npos){
             NS_LOG_INFO("\t|-> DISCOVERY REQUEST");
-            
-            if(m_stime){
-				uint16_t distime = 3600;
-				uint64_t maxtime = 1000*CONF_WAIT_REPL*(3600.0/(3600.0+distime*m_cache.size()));
-				uint64_t dtime = Normal(maxtime);
-				EventId m_sendDiscoResponse = Simulator::Schedule (
-					MilliSeconds(dtime),
-					&CoapNode::sendCache,
-					this,
-					InetSocketAddress::ConvertFrom (from).GetIpv4(),
-					InetSocketAddress::ConvertFrom(from).GetPort(),
-					packet.messageid);
-				addID(packet.messageid,m_sendDiscoResponse);
+						if(m_stime){
+							uint16_t distime = 3000;
+							uint64_t maxtime = 1000*CONF_WAIT_REPL*(3600.0/(3600.0+distime*m_cache.size()));
+							uint64_t dtime = Normal(maxtime);
+							NS_LOG_INFO ("\t|-> RESPONSE DELAYED AT "<<dtime/1000<<" s");
+							EventId m_sendDiscoResponse = Simulator::Schedule (
+								MilliSeconds(dtime),
+								&CoapNode::sendCache,
+								this,
+								InetSocketAddress::ConvertFrom (from).GetIpv4(),
+								InetSocketAddress::ConvertFrom(from).GetPort(),
+								packet.messageid);
+							addID(packet.messageid,m_sendDiscoResponse);
 
-			}else{
-				sendCache(
-					InetSocketAddress::ConvertFrom (from).GetIpv4(),
-					InetSocketAddress::ConvertFrom(from).GetPort(),
-					packet.messageid);
-			}
-          }
+						}else{
+							sendCache(
+							InetSocketAddress::ConvertFrom (from).GetIpv4(),
+							InetSocketAddress::ConvertFrom(from).GetPort(),
+							packet.messageid);
+						}
+					}
       }
       else if(packet.type == COAP_CON && packet.code == 0x00){    // Answer to an ack
         NS_LOG_INFO("\t|-> RECV ACK "<<packet.messageid);

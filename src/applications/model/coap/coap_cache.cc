@@ -92,9 +92,9 @@ void CoapNode::showCache(){
 			NS_LOG_INFO("CACHE_DUMP,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<","<< std::to_string(m_cache[i].age)<<","<<Ipv4AddressToString(m_cache[i].ip)<<"/"<<m_cache[i].url);
 		}
 	}
-  else{
+	else{
       NS_LOG_INFO("CACHE_DUMP,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<",EMP");
-  }
+	}
 	saveCache();
     m_showCache = Simulator::Schedule (Seconds(m_cacheinterval), &CoapNode::showCache, this);
 	checkCache();
@@ -104,22 +104,20 @@ void CoapNode::showCache(){
 void CoapNode::saveCache(){
 	Ptr<OutputStreamWrapper> cacheStream = Create<OutputStreamWrapper>(Ipv4AddressToString(GetAddr())+"_cache", std::ios::app);
 	std::ostream *stream = cacheStream->GetStream ();
+	*stream << "CACHE_DUMP\t"<<Simulator::Now ().GetSeconds ()<<"\t"<< GetAddr() <<"\t"<< m_cache.size() <<std::endl;
 	if(!m_cache.empty()){
-		*stream << "CACHE_DUMP\t"<<Simulator::Now ().GetSeconds ()<<"\t"<< GetAddr() <<"\t"<< m_cache.size() <<std::endl;
 		for (u_int32_t i=0; i<m_cache.size(); ++i){
 			*stream << std::to_string(m_cache[i].age)<<"\t"<<Ipv4AddressToString(m_cache[i].ip)<<"/"<<m_cache[i].url<<std::endl;
 		}
 	}
-  else{
-		*stream << "CACHE_DUMP\t"<<Simulator::Now ().GetSeconds ()<<"\t"<< GetAddr() <<"\t0"<<std::endl;
-  }
 }
 
-void CoapNode::sendMDnsCache(Query query, Address from){
+void CoapNode::sendMDnsCache(Query query, Address from,uint16_t uid){
 	//checkCache();
 	deleteOutdated();
 	NS_LOG_INFO("MDNS_CACHE_SEND");
 	MDns cmdns(m_dnssocket,m_txTrace);
+	cmdns.mDNSId = uid;
 	cmdns.Clear();
 
 	Ipv4Address dnsmcast(MDNS_MCAST_ADDR);
@@ -134,7 +132,7 @@ void CoapNode::sendMDnsCache(Query query, Address from){
 	ownansw.rrttl = m_ageTime;
 	ownansw.rrset = 1;
 	cmdns.AddAnswer(ownansw);
-	if (m_cachesize!=0){
+	if (m_cacheopt!=0){
 		if(!m_cache.empty()){
 			for (u_int32_t i=0; i<m_cache.size(); ++i){
 				std::ostringstream oss;
@@ -186,8 +184,8 @@ bool CoapNode::addEntry(Ipv4Address addr,std::string url, uint32_t maxAge){
 
 
 void CoapNode::checkCache(){
-	if(!m_cache.empty()){
-		if(m_activatePing){
+	if(m_activatePing){
+		if(!m_cache.empty()){
 			NS_LOG_INFO("START_PING");
 			for (u_int32_t i=0; i<m_cache.size(); ++i){
 				ping(m_cache[i].ip,COAP_DEFAULT_PORT);

@@ -39,10 +39,11 @@ typedef struct Answer{
   bool valid;                           // False if problems were encountered decoding packet.
 
 } Answer;
-			
+
 class MDns {
  public:
 
+	uint16_t mDNSId;
   std::vector<Query> queries;
   std::vector<Answer> answers;
 

@@ -209,7 +209,7 @@ class CoapNode : public Application{
 			//Deal wioth the scheduling thing and all that stuff
 			void SendDiscovery();
 			void sendCache(Ipv4Address ip, int port, uint16_t messageid);
-			void sendMDnsCache(Query query, Address from);
+			void sendMDnsCache(Query query, Address from, uint16_t messageid);
 			void ping(Ipv4Address ip, int port);
 			void sendCachePart(Ipv4Address ip, int port, uint16_t messageid,std::string payloadstr);
 			// Send responses (Taking care of messageid and changing some other things)
@@ -235,6 +235,8 @@ class CoapNode : public Application{
 			bool addID(uint16_t id, EventId eid);
 			bool delID(uint16_t id);
 			bool checkID(uint16_t id);
+			bool checkIDCanceled(uint16_t id);
+
 
 			// Tools
 			uint64_t Normal(double max);
@@ -249,7 +251,7 @@ class CoapNode : public Application{
 			uint32_t m_etag; //! Is it mcast or ucast answer?
 			uint32_t m_stime; //! Is it mcast or ucast answer?
 			uint32_t m_cacheinterval;
-			
+
 			uint32_t m_mcast; //! Is it mcast or ucast answer?
 			uint16_t m_dataType; //! Is it get disco or get temp
 			uint16_t m_port; //!< Port on which we listen for incoming packets.
@@ -258,11 +260,12 @@ class CoapNode : public Application{
 			uint32_t m_count; //! Número máximos de peticiones
 			bool m_petitionLimit;
 			uint32_t m_ageTime;	//! TTL del caché
-			uint16_t m_cachesize;
+			uint16_t m_cacheopt;
 
 			struct eventItem{
 				EventId eid;
 				uint16_t id;
+				bool canceled;
 			};
 
 			std::vector<eventItem> m_idlist;

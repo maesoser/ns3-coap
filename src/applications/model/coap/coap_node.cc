@@ -49,9 +49,9 @@ TypeId CoapNode::GetTypeId (void){
                    UintegerValue (0),
                    MakeUintegerAccessor (&CoapNode::m_count),
                    MakeUintegerChecker<uint32_t> ())
-    .AddAttribute ("cache","Size of our cache. If it is 0, cache is deactivated.",
-                   UintegerValue (30),
-                   MakeUintegerAccessor (&CoapNode::m_cachesize),
+    .AddAttribute ("cache","If 1, cache is sent with answers, If 0, cache is not send.",
+                   UintegerValue (1),
+                   MakeUintegerAccessor (&CoapNode::m_cacheopt),
                    MakeUintegerChecker<uint16_t> ())
 	.AddAttribute ("cacheInterval","Interval in which the cache is showed and checked",
                    UintegerValue (30),
@@ -178,8 +178,7 @@ void CoapNode::StartApplication (void){
   m_socket6->SetRecvCallback (MakeCallback (&CoapNode::HandleRead, this));
   m_dnssocket->SetRecvCallback(MakeCallback(&CoapNode::HandleDns,this));
   //ScheduleTransmit (Seconds (0.));
-  if(m_ageTime!=0){
-  }
+
   if(m_interval!=0){
     ScheduleTransmit (Seconds(Normal(m_startDelay)));
   }
@@ -188,9 +187,8 @@ void CoapNode::StartApplication (void){
   }else{
     m_petitionLimit = false;
   }
-  //if(m_cachesize!=0){	I still want to see cache, even when I do not sent cache elements and just my elements!!
-    m_showCache = Simulator::Schedule (Seconds(Normal(m_cacheinterval)), &CoapNode::showCache, this);
-  //}
+
+  m_showCache = Simulator::Schedule (Seconds(Normal(m_cacheinterval)), &CoapNode::showCache, this);
 
 }
 
@@ -227,13 +225,26 @@ void CoapNode::HandleDns(Ptr<Socket> socket){
   while ((dnspacket = socket->RecvFrom (from))) {
 	 uint32_t data_size = dnspacket->GetSize ();
 
-     if (InetSocketAddress::IsMatchingType (from)){
-       NS_LOG_INFO ("DNS "<<Simulator::Now().GetSeconds () <<"s "<< GetAddr() <<" receive " << data_size << " bytes from " << InetSocketAddress::ConvertFrom (from).GetIpv4 () << ":" <<InetSocketAddress::ConvertFrom (from).GetPort ());
-     }
     MDns my_mdns(m_dnssocket,m_txTrace);
     int res = my_mdns.recvdns(dnspacket,from);
+		if (InetSocketAddress::IsMatchingType (from)){
+			NS_LOG_INFO ("DNS "<<Simulator::Now().GetSeconds () <<"s "<< GetAddr() <<" receive " << data_size << " bytes from " << InetSocketAddress::ConvertFrom (from).GetIpv4 () << ":" <<InetSocketAddress::ConvertFrom (from).GetPort () <<" ID:"<< my_mdns.mDNSId);
+		}
     if(res==1) {  // Recibe Query
-   	  sendMDnsCache(my_mdns.queries[0],from);
+			if(m_stime){
+				/*
+				uint16_t distime = 3000;
+				uint64_t maxtime = 1000*CONF_WAIT_REPL*(3600.0/(3600.0+distime*m_cache.size()));
+				uint64_t dtime = Normal(maxtime);
+				NS_LOG_INFO ("\t|-> RESPONSE DELAYED AT "<<dtime/1000<<" s");
+				EventId m_sendDiscoResponse = Simulator::Schedule (
+					MilliSeconds(dtime),
+					&CoapNode::sendMDnsCache,this,my_mdns.queries[0],from);
+				addID(my_mdns.mDNSId,m_sendDiscoResponse);
+				*/
+			}else{
+				sendMDnsCache(my_mdns.queries[0],from,my_mdns.mDNSId);
+			}
    	  //my_mdns.Clear();
     }
     if(res==2){  // Recibe Answer, tiene que procesar la Query
@@ -347,11 +358,24 @@ bool CoapNode::checkID(uint16_t id){
 	}
 	return false;
 }
+
+bool CoapNode::checkIDCanceled(uint16_t id){
+	if(!m_idlist.empty()){
+		for (u_int32_t i=0; i<m_idlist.size(); ++i){
+			if( m_idlist[i].id==id && m_idlist[i].canceled==true) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 bool CoapNode::addID(uint16_t id, EventId eid){
 	if(checkID(id)==false){
 		eventItem itm;
 		itm.id = id;
 		itm.eid = eid;
+		itm.canceled = false;
 		m_idlist.push_back(itm);
 	}
 	return true;
@@ -360,9 +384,12 @@ bool CoapNode::addID(uint16_t id, EventId eid){
 bool CoapNode::delID(uint16_t id){
 	if(!m_idlist.empty()){
 		for (u_int32_t i=0; i<m_idlist.size(); ++i){
-			if( m_idlist[i].id==id) {
+			if( m_idlist[i].id==id && m_idlist[i].canceled==false) {
+          NS_LOG_INFO ("STIME "<<Simulator::Now().GetSeconds () <<"s "<< GetAddr() <<" CANCELING RESPONSE "<< id);
+				m_idlist[i].canceled = true;
 				Simulator::Cancel(m_idlist[i].eid);
-				m_idlist.erase (m_idlist.begin()+i);
+				m_idlist[i].eid.Cancel();
+				//m_idlist.erase (m_idlist.begin()+i);
 				return true;
 			}
 		}

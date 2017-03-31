@@ -62,7 +62,10 @@ void MDns::AddQuery(const Query query) {
     NS_LOG_INFO(" ERROR. Resource records inclued before Queries.");
     return;
   }
-  data_buffer[2] = 0;     // 0b00000000 for Query, 0b10000000 for Answer.
+	uint16_t randID = rand();
+	data_buffer[0] = randID & 0xff;
+	data_buffer[1] = (randID >> 8);
+  data_buffer[2] = 0b00000000;     // 0b00000000 for Query, 0b10000000 for Answer.
   type = 1;
   ++query_count;
   data_buffer[4] = (query_count & 0xFF00) >> 8;
@@ -85,6 +88,11 @@ void MDns::AddQuery(const Query query) {
 }
 
 void MDns::AddAnswer(const Answer answer) {
+
+	data_buffer[0] = mDNSId & 0xff;
+	data_buffer[1] = (mDNSId >> 8);
+	data_buffer[2] = 0b10000000;     // 0b00000000 for Query, 0b10000000 for Answer.
+
   if (ns_count || ar_count) {
     NS_LOG_INFO(" ERROR. NS or AR records added before Answer records");
     return;
@@ -361,16 +369,13 @@ int MDns::recvdns(Ptr<Packet> dnspacket, Address from) {
       NS_LOG_INFO("\t|->Non zero Response code implies error");
       return false;
     }
-
+		mDNSId = (data_buffer[0]<<8) + data_buffer[1];
     query_count = (data_buffer[4] << 8) + data_buffer[5];	    // Number of incoming queries.
     answer_count = (data_buffer[6] << 8) + data_buffer[7];	    // Number of incoming answers.
     ns_count = (data_buffer[8] << 8) + data_buffer[9];	    // Number of incoming Name Server resource records.
     ar_count = (data_buffer[10] << 8) + data_buffer[11];	    // Number of incoming Additional resource records.
     NS_LOG_INFO("\t|-> Q_LEN: "<< query_count<<"   A_LEN: "<<answer_count<<"   NS_LEN: "<<ns_count<<"   ADT_LEN: "<<ar_count);
-
-    /*if(p_packet_function_) {
-      p_packet_function_(this);	      // Since a callback function has been registered, execute it.
-    }*/
+		NS_LOG_INFO("\t|-> UID: "<<mDNSId);
     // Start of Data section.
     buffer_pointer = 12;
     for (uint32_t i_question = 0; i_question < query_count; i_question++) {
@@ -411,7 +416,7 @@ void MDns::Send(Ptr<Socket> sockt,Ipv4Address addrs, TracedCallback<Ptr<const Pa
   udp_p->RemoveAllByteTags ();
 
   tracer(udp_p);
-      
+
   sockt->SendTo(udp_p,0,InetSocketAddress(Ipv4Address::ConvertFrom(addrs), MDNS_TARGET_PORT));
 
 }
