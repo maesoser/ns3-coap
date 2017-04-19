@@ -112,10 +112,11 @@ void CoapNode::saveCache(){
 	}
 }
 
-void CoapNode::sendMDnsCache(Query query, Address from,uint16_t uid){
+void CoapNode::sendMDnsCache(Query query, Address from, uint16_t uid){
+	if(checkIDCanceled(uid)==true) return;
 	//checkCache();
 	deleteOutdated();
-	NS_LOG_INFO("MDNS_CACHE_SEND");
+	NS_LOG_INFO(Simulator::Now ().GetSeconds () <<" MDNS_CACHE_SEND from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4AddressToString(InetSocketAddress::ConvertFrom(from).GetIpv4()) << " uid: "<<uid);
 	MDns cmdns(m_dnssocket,m_txTrace);
 	cmdns.mDNSId = uid;
 	cmdns.Clear();

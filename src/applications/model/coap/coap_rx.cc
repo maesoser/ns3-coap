@@ -69,6 +69,7 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
       }
 
       if (packet.type == COAP_ACK) {  // It is a RESPONSE
+					delID(packet.messageid);
           uint32_t recvAge = 0x00;
           for (int i = 0; i < packet.optionnum; i++) {
               if (packet.options[i].number == COAP_MAX_AGE && packet.options[i].length > 0) {
@@ -78,8 +79,6 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
               }
           }
           if(packet.payloadlen!=0){
-			// STIME
-            delID(packet.messageid);
             std::string payloadStr(packet.payload,packet.payload + packet.payloadlen);
             std::vector<std::string> vect = split(payloadStr,',');
             for(std::string vitem:vect){

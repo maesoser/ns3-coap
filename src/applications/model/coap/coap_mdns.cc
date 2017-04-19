@@ -5,8 +5,8 @@ using namespace ns3;
 NS_LOG_COMPONENT_DEFINE ("Coap_mDNS");
 
 void MDns::Clear() {
-  data_buffer[0] = 0;     // Query ID field which is unused in mDNS.
-  data_buffer[1] = 0;     // Query ID field which is unused in mDNS.
+  data_buffer[0] = 0;     // Query ID field.
+  data_buffer[1] = 0;     // Query ID field.
   data_buffer[2] = 0;     // 0b00000000 for Query, 0b10000000 for Answer.
   data_buffer[3] = 0;     // DNS flags which are mostly unused in mDNS.
   data_buffer[4] = 0;     // Number of queries.
@@ -63,8 +63,9 @@ void MDns::AddQuery(const Query query) {
     return;
   }
 	uint16_t randID = rand();
-	data_buffer[0] = randID & 0xff;
-	data_buffer[1] = (randID >> 8);
+	data_buffer[0] = (randID & 0xFF00) >> 8;
+	data_buffer[1] = randID & 0xFF;
+	// Quizás es ESTO
   data_buffer[2] = 0b00000000;     // 0b00000000 for Query, 0b10000000 for Answer.
   type = 1;
   ++query_count;
@@ -89,8 +90,9 @@ void MDns::AddQuery(const Query query) {
 
 void MDns::AddAnswer(const Answer answer) {
 
-	data_buffer[0] = mDNSId & 0xff;
-	data_buffer[1] = (mDNSId >> 8);
+	data_buffer[0] = (mDNSId & 0xFF00) >> 8;
+	data_buffer[1] = mDNSId & 0xFF;
+
 	data_buffer[2] = 0b10000000;     // 0b00000000 for Query, 0b10000000 for Answer.
 
   if (ns_count || ar_count) {

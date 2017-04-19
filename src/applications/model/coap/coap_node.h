@@ -236,7 +236,7 @@ class CoapNode : public Application{
 			bool delID(uint16_t id);
 			bool checkID(uint16_t id);
 			bool checkIDCanceled(uint16_t id);
-
+			void dumpIDList();
 
 			// Tools
 			uint64_t Normal(double max);

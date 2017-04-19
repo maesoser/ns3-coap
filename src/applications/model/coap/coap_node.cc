@@ -232,22 +232,20 @@ void CoapNode::HandleDns(Ptr<Socket> socket){
 		}
     if(res==1) {  // Recibe Query
 			if(m_stime){
-				/*
 				uint16_t distime = 3000;
 				uint64_t maxtime = 1000*CONF_WAIT_REPL*(3600.0/(3600.0+distime*m_cache.size()));
 				uint64_t dtime = Normal(maxtime);
 				NS_LOG_INFO ("\t|-> RESPONSE DELAYED AT "<<dtime/1000<<" s");
-				EventId m_sendDiscoResponse = Simulator::Schedule (
-					MilliSeconds(dtime),
-					&CoapNode::sendMDnsCache,this,my_mdns.queries[0],from);
+				Query delayed_query = my_mdns.queries[0];
+				EventId m_sendDiscoResponse = Simulator::Schedule (MilliSeconds(dtime),&CoapNode::sendMDnsCache,this,delayed_query,from,my_mdns.mDNSId);
 				addID(my_mdns.mDNSId,m_sendDiscoResponse);
-				*/
 			}else{
 				sendMDnsCache(my_mdns.queries[0],from,my_mdns.mDNSId);
 			}
    	  //my_mdns.Clear();
     }
     if(res==2){  // Recibe Answer, tiene que procesar la Query
+		delID(my_mdns.mDNSId);
 		//NS_LOG_INFO("DEBUG ANSW LENGTH " << my_mdns.answers.size());
 		for (u_int32_t i=0; i<my_mdns.answers.size(); ++i){
 			const Answer answer = my_mdns.answers[i];
@@ -370,6 +368,14 @@ bool CoapNode::checkIDCanceled(uint16_t id){
 	return false;
 }
 
+void CoapNode::dumpIDList(){
+	if(!m_idlist.empty()){
+		for (u_int32_t i=0; i<m_idlist.size(); ++i){
+			NS_LOG_INFO ("IDLST "<<Simulator::Now().GetSeconds () <<"\t"<< m_idlist[i].id <<"\t"<< m_idlist[i].canceled);
+		}
+	}
+}
+
 bool CoapNode::addID(uint16_t id, EventId eid){
 	if(checkID(id)==false){
 		eventItem itm;
@@ -377,13 +383,17 @@ bool CoapNode::addID(uint16_t id, EventId eid){
 		itm.eid = eid;
 		itm.canceled = false;
 		m_idlist.push_back(itm);
+		return true;
 	}
-	return true;
+	return false;
+
 }
 
 bool CoapNode::delID(uint16_t id){
+	NS_LOG_INFO ("DELID");
 	if(!m_idlist.empty()){
 		for (u_int32_t i=0; i<m_idlist.size(); ++i){
+			NS_LOG_INFO ("IDLST "<<Simulator::Now().GetSeconds () <<"\t"<< m_idlist[i].id <<"\t"<< m_idlist[i].canceled<<"\t?\t"<<id);
 			if( m_idlist[i].id==id && m_idlist[i].canceled==false) {
           NS_LOG_INFO ("STIME "<<Simulator::Now().GetSeconds () <<"s "<< GetAddr() <<" CANCELING RESPONSE "<< id);
 				m_idlist[i].canceled = true;
