@@ -28,6 +28,7 @@ else
   echo removing old trace files
   rm energy_*
   rm *.pcap
+  rm *_rping
   rm coap_trace.tr
   rm coap_animation.xml
   rm state_*
@@ -55,6 +56,7 @@ else
   zip -u $d state_*
   zip -u $d scratch/coap.cc
   zip -u $d routetables
+  #zip -u $d *_rping
   echo Done
   echo Removing files
   rm energy_*
@@ -64,6 +66,7 @@ else
   rm state_*
   rm routetables
   rm *_cache
+  rm *_rping
   #tail -10 output.log
   #rm output.log
   du -h $d

@@ -390,12 +390,9 @@ bool CoapNode::addID(uint16_t id, EventId eid){
 }
 
 bool CoapNode::delID(uint16_t id){
-	NS_LOG_INFO ("DELID");
 	if(!m_idlist.empty()){
 		for (u_int32_t i=0; i<m_idlist.size(); ++i){
-			NS_LOG_INFO ("IDLST "<<Simulator::Now().GetSeconds () <<"\t"<< m_idlist[i].id <<"\t"<< m_idlist[i].canceled<<"\t?\t"<<id);
 			if( m_idlist[i].id==id && m_idlist[i].canceled==false) {
-          NS_LOG_INFO ("STIME "<<Simulator::Now().GetSeconds () <<"s "<< GetAddr() <<" CANCELING RESPONSE "<< id);
 				m_idlist[i].canceled = true;
 				Simulator::Cancel(m_idlist[i].eid);
 				m_idlist[i].eid.Cancel();

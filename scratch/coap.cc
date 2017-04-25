@@ -195,7 +195,7 @@ int main (int argc, char *argv[])
   CommandLine cmd;
   cmd.AddValue("distance", "Distance between nodes (m)", distance);
   cmd.AddValue("speed", "Speed of the nodes (m/s)", speed);
-  
+
   // Energy related parameters
   cmd.AddValue("gain", "Rx Gain (dB)", RxGain);
   cmd.AddValue("txpower","Transmission Power (dB)",txPowerEnd);
@@ -203,7 +203,7 @@ int main (int argc, char *argv[])
   cmd.AddValue("voltage","Battery voltage (v)",voltage);
   cmd.AddValue("idlecurrent","Current consumed when iddle (A)",idleCurrent);
   cmd.AddValue("txcurrent","Current consumed when transmitting (A)",txCurrent);
-  
+
   cmd.AddValue("routing","Current routing protocol 0=NONE,1=SMF,2=OLSR_SMF,3=OLSR,4=AODV_SMF 5=DSDV_SMF",protocol);
   cmd.AddValue("mdns","1=mDNS 0=coAP discovery",mDnsOn);
   cmd.AddValue("ping","1=ping on 0=ping off",pingopt);
@@ -211,13 +211,13 @@ int main (int argc, char *argv[])
   cmd.AddValue("stime","1=smart answer time on",stimeopt);
   cmd.AddValue("mcast","1=mcast answers 0=ucast answers",mcastopt);
   cmd.AddValue("cacheinterval","Determines the cache show up time",cacheinterval);
-  
+
   cmd.AddValue("verbose","Verbosity level 0=script+SMF, 1=coap",verbose);
-  
+
   cmd.AddValue("interval","The time to wait between requests. If it is 0-> Server Mode.",interval);
   cmd.AddValue("maxAge","Delete items after max-Age? If >0 it is the defaultage given to the services",maxAge);
   cmd.AddValue("runtime","number of seconds the simulation will last",runtime);
-  
+
   cmd.Parse (argc, argv);
 
 
@@ -328,8 +328,8 @@ int main (int argc, char *argv[])
       m_protocolName = "SMF";
       break;
     case 2:
-      routingList.Add(smf,10);
-      routingList.Add (olsr, 5);
+      routingList.Add(smf,5);
+      routingList.Add (olsr, 10);
       olsr.PrintRoutingTableAllEvery(Seconds(5),routingStream);
       m_protocolName = "OLSR_SMF";
       break;
@@ -339,14 +339,14 @@ int main (int argc, char *argv[])
       m_protocolName = "OLSR";
       break;
     case 4:
-      routingList.Add(smf,10);
-      routingList.Add (aodv, 5);
+      routingList.Add(smf,5);
+      routingList.Add (aodv, 10);
       aodv.PrintRoutingTableAllEvery(Seconds(5),routingStream);
       m_protocolName = "AODV_SMF";
       break;
     case 5:
-      routingList.Add(smf,10);
-      routingList.Add (dsdv, 5);
+      routingList.Add(smf,5);
+      routingList.Add (dsdv, 10);
       dsdv.PrintRoutingTableAllEvery(Seconds(5),routingStream);
       m_protocolName = "DSDV_SMF";
       break;
@@ -406,7 +406,7 @@ int main (int argc, char *argv[])
 
   CoapNodeHelper coapnode(5683);
   coapnode.SetAttribute ("startDelay",UintegerValue (60));
-  
+
   // Interval between discoveries
   coapnode.SetAttribute ("interval", TimeValue (Seconds (interval)));
   coapnode.SetAttribute ("mcast", UintegerValue (mcastopt));
@@ -414,13 +414,13 @@ int main (int argc, char *argv[])
   coapnode.SetAttribute ("useMaxAge",UintegerValue (maxAge));   // default maxAge
   coapnode.SetAttribute ("mDNS",UintegerValue(mDnsOn));
   coapnode.SetAttribute ("ping",UintegerValue(pingopt));	  // Tha's useful if you want to verify pings
-  coapnode.SetAttribute ("etag",UintegerValue(etagopt));	  
-  coapnode.SetAttribute ("stime",UintegerValue(stimeopt));	 
+  coapnode.SetAttribute ("etag",UintegerValue(etagopt));
+  coapnode.SetAttribute ("stime",UintegerValue(stimeopt));
   coapnode.SetAttribute ("cacheInterval",UintegerValue(cacheinterval));	  // Tha's useful if you want to verify pings
 
-  apps = coapnode.Install(nodes);	
+  apps = coapnode.Install(nodes);
   apps.Start (Seconds (0.0));
-  
+
   NS_LOG_INFO ("SIM TIME: " << runtime);
 
   if(runtime>900){
@@ -431,7 +431,7 @@ int main (int argc, char *argv[])
     NS_LOG_INFO ("APPTIME: " << (2*runtime)/3);
 
   }
-  
+
 
   /*
   CoapServerHelper coapserver (5683);

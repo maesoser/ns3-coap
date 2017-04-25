@@ -50,7 +50,7 @@ void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid){
 	  }
   }
   result = result +"</temp>;title=\"This is the local temperature sensor\"";
-  
+
   if(m_mcast)	sendCachePart(m_mcastAddr,port, messageid,result);
   else	sendCachePart(ip,port, messageid,result);
 }
@@ -131,6 +131,9 @@ void CoapNode::sendCachePart(Ipv4Address ip, int port, uint16_t messageid,std::s
 }
 
 void CoapNode::ping(Ipv4Address ip, int port){
+	Ptr<OutputStreamWrapper> cacheStream = Create<OutputStreamWrapper>(Ipv4AddressToString(GetAddr())+"_rping", std::ios::app);
+	std::ostream *stream = cacheStream->GetStream ();
+	*stream << Simulator::Now ().GetSeconds ()<<",PING,"<< Ipv4AddressToString(ip) << std::endl;
   sendCoap(ip, port, NULL, COAP_CON, COAP_NULL, NULL, 0, NULL, 0);
 }
 
@@ -193,7 +196,7 @@ void CoapNode::sendmDnsRequest(){
      {
 		NS_LOG_INFO (Simulator::Now ().GetSeconds ()
 			<< "s send "
-			<< my_mdns.data_size 
+			<< my_mdns.data_size
 			<< " bytes to " << InetSocketAddress::ConvertFrom (dnsmcast).GetIpv4 ()
 			<< ":" << InetSocketAddress::ConvertFrom (dnsmcast).GetPort ());
      }

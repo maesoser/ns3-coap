@@ -168,6 +168,9 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
       }
       else if(packet.type == COAP_RESET){
         NS_LOG_INFO("\t|-> RECV RST (ACK ANSWER)"<<packet.messageid);
+				Ptr<OutputStreamWrapper> cacheStream = Create<OutputStreamWrapper>(Ipv4AddressToString(GetAddr())+"_rping", std::ios::app);
+				std::ostream *stream = cacheStream->GetStream ();
+				*stream << Simulator::Now ().GetSeconds ()<<",PONG,"<< Ipv4AddressToString(InetSocketAddress::ConvertFrom (from).GetIpv4()) << std::endl;
       }
   }
   return true;
