@@ -39,7 +39,7 @@ bool CoapNode::RefreshEntry(uint32_t index){
 
 */
 uint32_t CoapNode::deleteOutdated(){
-  if (m_ageTime==0) return 0; // No está conectado el tiempo de expiración
+  if (m_ageTime==0) return 0; // No está activada la opciónd e expiración
 	uint32_t ndel = 0;
 	if(!m_cache.empty()){
 		for (u_int32_t i=0; i < m_cache.size(); ++i){
@@ -87,6 +87,7 @@ size_t CoapNode::getOldestEntry(){
 }
 
 void CoapNode::showCache(){
+	/*
 	if(!m_cache.empty()){
 		for (u_int32_t i=0; i<m_cache.size(); ++i){
 			NS_LOG_INFO("CACHE_DUMP,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<","<< std::to_string(m_cache[i].age)<<","<<Ipv4AddressToString(m_cache[i].ip)<<"/"<<m_cache[i].url);
@@ -95,6 +96,7 @@ void CoapNode::showCache(){
 	else{
       NS_LOG_INFO("CACHE_DUMP,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<",EMP");
 	}
+	*/
 	saveCache();
     m_showCache = Simulator::Schedule (Seconds(m_cacheinterval), &CoapNode::showCache, this);
 	checkCache();
@@ -113,10 +115,20 @@ void CoapNode::saveCache(){
 }
 
 void CoapNode::sendMDnsCache(Query query, Address from, uint16_t uid){
-	if(checkIDCanceled(uid)==true) return;
+	if(m_stime==1){
+		if(checkID(uid)==PKT_CANCELED) {
+			setIDStatus(uid,PKT_OUTDATED); // xq ya no es válido, lo he cancelado
+			NS_LOG_INFO (Simulator::Now ().GetSeconds () << " "<< GetAddr() <<" CANCELED ANSWER to " << Ipv4AddressToString(InetSocketAddress::ConvertFrom(from).GetIpv4()) << " ID:"<< uid);
+			return;
+		}
+		if(checkID(uid)==PKT_OUTDATED) {
+			return;
+		}
+	}
 	//checkCache();
 	deleteOutdated();
-	NS_LOG_INFO(Simulator::Now ().GetSeconds () <<" MDNS_CACHE_SEND from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4AddressToString(InetSocketAddress::ConvertFrom(from).GetIpv4()) << " uid: "<<uid);
+	//  89.4992 10.1.1.13 RECV 67 bytes from 10.1.1.13 DNS ANSWER ID:50668
+	NS_LOG_INFO(Simulator::Now ().GetSeconds () <<" MDNS_CACHE_SEND from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4AddressToString(InetSocketAddress::ConvertFrom(from).GetIpv4()) << " ID: "<<uid);
 	MDns cmdns(m_dnssocket,m_txTrace);
 	cmdns.mDNSId = uid;
 	cmdns.Clear();
@@ -129,13 +141,36 @@ void CoapNode::sendMDnsCache(Query query, Address from, uint16_t uid){
 	strncpy(ownansw.rdata_buffer,cresult, MAX_MDNS_NAME_LEN);
 	strncpy(ownansw.name_buffer,  query.qname_buffer, MAX_MDNS_NAME_LEN);
 	ownansw.rrtype = MDNS_TYPE_PTR;
-	ownansw.rrclass = 1;    // "INternet"
+	ownansw.rrclass = 1;    // "Internet"
 	ownansw.rrttl = m_ageTime;
 	ownansw.rrset = 1;
 	cmdns.AddAnswer(ownansw);
+	int servsent = 0;
+	int servtotal = 0;
+
 	if (m_cacheopt!=0){
 		if(!m_cache.empty()){
 			for (u_int32_t i=0; i<m_cache.size(); ++i){
+				if(m_stime==2){
+					servtotal +=1;
+					if(checkServiceInDelayedResponse(uid, m_cache[i].ip, m_cache[i].url)==false){
+						servsent = servsent+1;
+						std::ostringstream oss;
+						m_cache[i].ip.Print (oss);
+						std::string result = oss.str()+ "/" +m_cache[i].url;
+						const char * cresult = result.c_str();
+						struct Answer rransw;
+						//NS_LOG_INFO("DEBUG_ANSW from " << Ipv4AddressToString(GetAddr()) << " SEND " << cresult);
+						strncpy(rransw.rdata_buffer,cresult, MAX_MDNS_NAME_LEN);
+						strncpy(rransw.name_buffer,  query.qname_buffer, MAX_MDNS_NAME_LEN);
+						rransw.rrtype = MDNS_TYPE_PTR;
+						rransw.rrclass = 1;    // "INternet"
+						rransw.rrttl = m_cache[i].age;
+						rransw.rrset = 1;
+						cmdns.AddAnswer(rransw);
+						//NS_LOG_INFO("MDNS_CACHE_SEND,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<","<< std::to_string(m_cache[i].age)<<","<<Ipv4AddressToString(m_cache[i].ip)<<"/"<<m_cache[i].url);
+					}
+			}else{
 				std::ostringstream oss;
 				m_cache[i].ip.Print (oss);
 				std::string result = oss.str()+ "/" +m_cache[i].url;
@@ -150,15 +185,19 @@ void CoapNode::sendMDnsCache(Query query, Address from, uint16_t uid){
 				rransw.rrset = 1;
 				cmdns.AddAnswer(rransw);
 				//NS_LOG_INFO("MDNS_CACHE_SEND,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<","<< std::to_string(m_cache[i].age)<<","<<Ipv4AddressToString(m_cache[i].ip)<<"/"<<m_cache[i].url);
+
+				}
+
 			}
 		}
 	}
 	if(m_mcast){
+		NS_LOG_INFO("DEBUG INFO TOTL "<< servtotal <<" SENT "<< servsent);
 		cmdns.Send(m_dnssocket,dnsmcast,m_txTrace);
-	}
-	else {
+	}else{
 		cmdns.Send(m_dnssocket,InetSocketAddress::ConvertFrom(from).GetIpv4(),m_txTrace);
 	}
+	setIDStatus(uid,PKT_OUTDATED); // xq ya no es válido, lo he enviado una vez
 }
 bool CoapNode::updateEntry(Ipv4Address addr,std::string url, uint32_t maxAge){
 	size_t prophash = std::hash<std::string>()(Ipv4AddressToString(addr)+""+url);

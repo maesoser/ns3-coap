@@ -14,6 +14,7 @@ def build(bld):
         'model/udp-echo-client.cc',
         'model/udp-echo-server.cc',
         'model/coap/coap_node.cc',
+        'model/coap/coap_srep.cc',
         'model/coap/coap_tx.cc',
         'model/coap/coap_rx.cc',
         'model/coap/coap_cache.cc',

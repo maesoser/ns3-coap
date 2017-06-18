@@ -30,29 +30,54 @@ uint16_t CoapNode::sendResponse(Ipv4Address ip, int port, uint16_t messageid, ch
 }
 
 void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid){
-  if(checkIDCanceled(messageid)) return;
+  if(m_stime==1 && checkID(messageid)==PKT_CANCELED) {
+    setIDStatus(messageid,PKT_OUTDATED);
+    NS_LOG_INFO (Simulator::Now ().GetSeconds () << " "<< GetAddr() <<" CANCELED ANSWER to " << Ipv4Address::ConvertFrom(ip)<< " ID:"<< messageid);
+    return;
+  }
+	if(m_stime==1 && checkID(messageid)==PKT_OUTDATED) {
+		return;
+	}
+
+  int servtotal = 0;
+  int servvalid = 0;
+
   std::string result = "";
-  if(m_cacheopt!=0){
-	  deleteOutdated();
-	  if(!m_cache.empty()){
-		u_int32_t i_actual = 0;
-		for (u_int32_t i=0; i<m_cache.size(); ++i){
-		  if(m_cache[i].ip!=ip){
-			result = result + "</"+Ipv4AddressToString(m_cache[i].ip)+ "/" +m_cache[i].url+ ">;title=\"This is a test\",";
-			i_actual++;
-		  }
-		  if(i_actual==3){
-			i_actual=0;
-			sendCachePart(ip,port, messageid,result);
-			result = "";
-		  }
-		}
+  if(m_cacheopt!=0){ // If send_cache is ON
+	  deleteOutdated();  // Delete outdated entries
+	  if(!m_cache.empty()){  // Check if the cache is empty
+  		u_int32_t i_actual = 0;
+  		for (u_int32_t i=0; i<m_cache.size(); ++i){ // Go through the cache
+  		  if(m_cache[i].ip!=ip){  // Check if we're trying to send our own services
+          if(m_stime==2){
+            servtotal +=1;
+            if(checkServiceInDelayedResponse(messageid, m_cache[i].ip, m_cache[i].url)==false){
+                servvalid += 1;
+                result = result + "</"+Ipv4AddressToString(m_cache[i].ip)+ "/" +m_cache[i].url+ ">;title=\"This is a test\",";
+                i_actual++;
+              }
+          }else{
+            result = result + "</"+Ipv4AddressToString(m_cache[i].ip)+ "/" +m_cache[i].url+ ">;title=\"This is a test\",";
+            i_actual++;
+          }
+  		  }
+  		  if(i_actual==3){
+  			i_actual = 0;
+  			sendCachePart(ip,port, messageid, result);
+  			result = "";
+  		  }
+  		}
 	  }
   }
   result = result +"</temp>;title=\"This is the local temperature sensor\"";
-
-  if(m_mcast)	sendCachePart(m_mcastAddr,port, messageid,result);
-  else	sendCachePart(ip,port, messageid,result);
+  if(m_mcast){
+      NS_LOG_INFO("DEBUG INFO TOTL "<< servtotal <<" SENT "<< servvalid);
+      sendCachePart(m_mcastAddr,port, messageid,result);
+  }
+  else{
+    sendCachePart(ip,port, messageid,result);
+  }
+  setIDStatus(messageid,PKT_OUTDATED); // xq ya no es válido, lo he enviado una vez
 }
 
 uint16_t CoapNode::sendCoap(Ipv4Address ip, int port, char *url, COAP_TYPE type, COAP_METHOD method, uint8_t *token, uint8_t tokenlen, uint8_t *payload, uint32_t payloadlen) {
@@ -165,6 +190,7 @@ void CoapNode::sendmDnsRequest(){
    query_mqtt.unicast_response = 0;
    my_mdns.AddQuery(query_mqtt);
    Ipv4Address dnsmcast(MDNS_MCAST_ADDR);
+   uint16_t id = ((uint16_t) my_mdns.data_buffer[0] << 8) |  my_mdns.data_buffer[1];
    my_mdns.Send(m_dnssocket,dnsmcast,m_txTrace);
 
    /*
@@ -180,29 +206,27 @@ void CoapNode::sendmDnsRequest(){
    if (Ipv4Address::IsMatchingType (dnsmcast))
      {
        NS_LOG_INFO (Simulator::Now ().GetSeconds ()
-		   << "s "<< GetAddr()
-		   <<" send " << my_mdns.data_size
-		   << " bytes to " << Ipv4Address::ConvertFrom (dnsmcast)
-		   << ":" << MDNS_MCAST_ADDR);
+		   << " "<< GetAddr()
+		   <<" SEND " << my_mdns.data_size
+		   << " bytes to " << Ipv4Address::ConvertFrom (dnsmcast)<< " DNS QUERY ID:" << id);
      }
    else if (Ipv6Address::IsMatchingType (dnsmcast))
      {
        NS_LOG_INFO (Simulator::Now ().GetSeconds ()
-		   << "s send " << my_mdns.data_size
-		   << " bytes to " << Ipv6Address::ConvertFrom (dnsmcast)
-		   << ":" << MDNS_MCAST_ADDR);
+		   << " SEND " << my_mdns.data_size
+		   << " bytes to " << Ipv6Address::ConvertFrom (dnsmcast)<< " DNS QUERY ID:" << id);
      }
    else if (InetSocketAddress::IsMatchingType (dnsmcast))
      {
 		NS_LOG_INFO (Simulator::Now ().GetSeconds ()
-			<< "s send "
+			<< " SEND "
 			<< my_mdns.data_size
-			<< " bytes to " << InetSocketAddress::ConvertFrom (dnsmcast).GetIpv4 ()
-			<< ":" << InetSocketAddress::ConvertFrom (dnsmcast).GetPort ());
+			<< " bytes to " << InetSocketAddress::ConvertFrom (dnsmcast).GetIpv4 ()<< " DNS QUERY ID:" << id);
      }
    else if (Inet6SocketAddress::IsMatchingType (dnsmcast))
      {
-       NS_LOG_INFO (Simulator::Now ().GetSeconds () << "s send " << my_mdns.data_size << " bytes to " << Inet6SocketAddress::ConvertFrom (dnsmcast).GetIpv6 () << ":" << Inet6SocketAddress::ConvertFrom (dnsmcast).GetPort ());
+       NS_LOG_INFO (Simulator::Now ().GetSeconds () << " SEND " << my_mdns.data_size << " bytes to " <<
+        Inet6SocketAddress::ConvertFrom (dnsmcast).GetIpv6 ()<< " DNS QUERY ID:" << id);
      }
 
      if(m_interval!=0) ScheduleTransmit(m_interval);
@@ -292,19 +316,19 @@ uint16_t CoapNode::sendDtg(CoapPacket &packet, Ipv4Address ip, int port) {
 
      if (Ipv4Address::IsMatchingType (ip))
        {
-         NS_LOG_INFO (Simulator::Now ().GetSeconds () << "s "<< GetAddr() <<" send " << packetSize << " bytes to " << Ipv4Address::ConvertFrom (ip) << ":" << port<< " id:"<<packet.messageid);
+         NS_LOG_INFO (Simulator::Now ().GetSeconds () << " "<< GetAddr() <<" SEND " << packetSize << " bytes to " << Ipv4Address::ConvertFrom (ip)<< " COAP TYPE:"<< getTypeStr(packet.type)<<" CODE:"<< getMthStr(packet.code)<<" ID:"<<packet.messageid);
        }
      else if (Ipv6Address::IsMatchingType (ip))
        {
-         NS_LOG_INFO (Simulator::Now ().GetSeconds () << "s send " << packetSize << " bytes to " << Ipv6Address::ConvertFrom (ip) << ":" << port<< " id:"<<packet.messageid);
+         NS_LOG_INFO (Simulator::Now ().GetSeconds () << " SEND " << packetSize << " bytes to " << Ipv6Address::ConvertFrom (ip) << " COAP ID:" << packet.messageid);
        }
      else if (InetSocketAddress::IsMatchingType (ip))
        {
-         NS_LOG_INFO (Simulator::Now ().GetSeconds () << "s send " << packetSize << " bytes to " << InetSocketAddress::ConvertFrom (ip).GetIpv4 () << ":" << InetSocketAddress::ConvertFrom (ip).GetPort ());
+         NS_LOG_INFO (Simulator::Now ().GetSeconds () << " SEND " << packetSize << " bytes to " << InetSocketAddress::ConvertFrom (ip).GetIpv4 () );
        }
      else if (Inet6SocketAddress::IsMatchingType (ip))
        {
-         NS_LOG_INFO (Simulator::Now ().GetSeconds () << "s send " << packetSize << " bytes to " << Inet6SocketAddress::ConvertFrom (ip).GetIpv6 () << ":" << Inet6SocketAddress::ConvertFrom (ip).GetPort ());
+         NS_LOG_INFO (Simulator::Now ().GetSeconds () << " SEND " << packetSize << " bytes to " << Inet6SocketAddress::ConvertFrom (ip).GetIpv6 () );
        }
 
     return packet.messageid;

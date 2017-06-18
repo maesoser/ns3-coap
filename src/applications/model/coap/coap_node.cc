@@ -65,11 +65,7 @@ TypeId CoapNode::GetTypeId (void){
 					UintegerValue (0),
                   MakeUintegerAccessor (&CoapNode::m_activatemDns),
                   MakeUintegerChecker<uint32_t> ())
-		.AddAttribute ("etag","If it is 1, it uses etag to avoid data retransmissions",
-					UintegerValue (0),
-                  MakeUintegerAccessor (&CoapNode::m_etag),
-                  MakeUintegerChecker<uint32_t> ())
-		.AddAttribute ("stime","If it is 1, it uses smart tx time to save transmissions",
+		.AddAttribute ("stime","If it is 1, it uses smart tx time to save transmissions, if it is 2, it retransmitt just untx heared services.",
 					UintegerValue (0),
                   MakeUintegerAccessor (&CoapNode::m_stime),
                   MakeUintegerChecker<uint32_t> ())
@@ -180,7 +176,7 @@ void CoapNode::StartApplication (void){
   //ScheduleTransmit (Seconds (0.));
 
   if(m_interval!=0){
-    ScheduleTransmit (Seconds(Normal(m_startDelay)));
+    ScheduleTransmit (Seconds(Uniform(m_startDelay)));
   }
   if(m_count!=0){
     m_petitionLimit = true;
@@ -188,7 +184,7 @@ void CoapNode::StartApplication (void){
     m_petitionLimit = false;
   }
 
-  m_showCache = Simulator::Schedule (Seconds(Normal(m_cacheinterval)), &CoapNode::showCache, this);
+  m_showCache = Simulator::Schedule (Seconds(Uniform(m_cacheinterval)), &CoapNode::showCache, this);
 
 }
 
@@ -227,41 +223,49 @@ void CoapNode::HandleDns(Ptr<Socket> socket){
 
     MDns my_mdns(m_dnssocket,m_txTrace);
     int res = my_mdns.recvdns(dnspacket,from);
-		if (InetSocketAddress::IsMatchingType (from)){
-			NS_LOG_INFO ("DNS "<<Simulator::Now().GetSeconds () <<"s "<< GetAddr() <<" receive " << data_size << " bytes from " << InetSocketAddress::ConvertFrom (from).GetIpv4 () << ":" <<InetSocketAddress::ConvertFrom (from).GetPort () <<" ID:"<< my_mdns.mDNSId);
-		}
     if(res==1) {  // Recibe Query
-			if(m_stime){
-				uint16_t distime = 3000;
-				uint64_t maxtime = 1000*CONF_WAIT_REPL*(3600.0/(3600.0+distime*m_cache.size()));
-				uint64_t dtime = Normal(maxtime);
-				NS_LOG_INFO ("\t|-> RESPONSE DELAYED AT "<<dtime/1000<<" s");
-				Query delayed_query = my_mdns.queries[0];
-				EventId m_sendDiscoResponse = Simulator::Schedule (MilliSeconds(dtime),&CoapNode::sendMDnsCache,this,delayed_query,from,my_mdns.mDNSId);
-				addID(my_mdns.mDNSId,m_sendDiscoResponse);
+      if (InetSocketAddress::IsMatchingType (from)){
+        NS_LOG_INFO (Simulator::Now().GetSeconds () <<" "<< GetAddr() <<" RECV " << data_size << " bytes from " << InetSocketAddress::ConvertFrom (from).GetIpv4 () <<" DNS QUERY ID:"<< my_mdns.mDNSId);
+      }
+			if(m_stime!=0){
+				if(checkID(my_mdns.mDNSId)==PKT_NOTFOUND){
+					uint64_t dtime = getResponseTime();
+					Query delayed_query = my_mdns.queries[0];
+					EventId m_sendDiscoResponse = Simulator::Schedule (MilliSeconds(dtime),&CoapNode::sendMDnsCache,this,delayed_query,from,my_mdns.mDNSId);
+					addID(my_mdns.mDNSId,m_sendDiscoResponse);
+					NS_LOG_INFO (Simulator::Now().GetSeconds () <<" "<< GetAddr() <<" DELAY ANSWER ID "<<my_mdns.mDNSId<<" TO " << InetSocketAddress::ConvertFrom (from).GetIpv4 () <<" "<< dtime << " ms");
+				}
 			}else{
 				sendMDnsCache(my_mdns.queries[0],from,my_mdns.mDNSId);
 			}
    	  //my_mdns.Clear();
     }
     if(res==2){  // Recibe Answer, tiene que procesar la Query
-		delID(my_mdns.mDNSId);
-		//NS_LOG_INFO("DEBUG ANSW LENGTH " << my_mdns.answers.size());
-		for (u_int32_t i=0; i<my_mdns.answers.size(); ++i){
-			const Answer answer = my_mdns.answers[i];
-			if (answer.valid) {
-				std::string puri(answer.rdata_buffer);
-				Ipv4Address mdip(split(puri,'/')[0].c_str());
-				std::string vser = split(puri,'/')[1];
-				if (addEntry(mdip, vser, m_ageTime)==false){
-					if (mdip == InetSocketAddress::ConvertFrom(from).GetIpv4()){
-						updateEntry(mdip, vser, m_ageTime);
-					}
-				}
+      if (InetSocketAddress::IsMatchingType (from)){
+        NS_LOG_INFO (Simulator::Now().GetSeconds () <<" "<< GetAddr() <<" RECV " << data_size << " bytes from " << InetSocketAddress::ConvertFrom (from).GetIpv4 () <<" DNS ANSWER ID:"<< my_mdns.mDNSId);
+      }
+      if(m_stime==1){ // Borramos el ID ya que ha sido contestado con anterioridad
+  		    delID(my_mdns.mDNSId);
+      }
+  		//NS_LOG_INFO("DEBUG ANSW LENGTH " << my_mdns.answers.size());
+  		for (u_int32_t i=0; i<my_mdns.answers.size(); ++i){
+  			const Answer answer = my_mdns.answers[i];
+  			if (answer.valid) {
+  				std::string puri(answer.rdata_buffer);
+  				Ipv4Address mdip(split(puri,'/')[0].c_str());
+  				std::string vser = split(puri,'/')[1];
+          if(m_stime==2){
+            updateID(my_mdns.mDNSId,mdip,vser);
+          }
+  				if (addEntry(mdip, vser, (uint32_t) answer.rrttl)==false){
+  					if (mdip == InetSocketAddress::ConvertFrom(from).GetIpv4()){
+  						updateEntry(mdip, vser, m_ageTime);
+  					}
+  				}
 
-			  //NS_LOG_INFO("\t|-> ANSW: "<< answer.name_buffer<<" = "<< answer.rdata_buffer);
-			}
-		}
+  			  //NS_LOG_INFO("\t|-> ANSW: "<< answer.name_buffer<<" = "<< answer.rdata_buffer);
+  			}
+  		}
     }
   }
 }
@@ -346,62 +350,13 @@ void CoapNode::readServicesFile(){
   }
 }
 
-bool CoapNode::checkID(uint16_t id){
-	if(!m_idlist.empty()){
-		for (u_int32_t i=0; i<m_idlist.size(); ++i){
-			if( m_idlist[i].id==id) {
-				return true;
-			}
-		}
-	}
-	return false;
+void CoapNode::saveLog(std::string texttolog){
+  std::string ipaddrstr = Ipv4AddressToString(GetAddr());
+  std::string node_id = split(ipaddrstr,';')[3];
+	Ptr<OutputStreamWrapper> cacheStream = Create<OutputStreamWrapper>(node_id+"_log.txt", std::ios::app);
+	std::ostream *stream = cacheStream->GetStream ();
+	*stream << texttolog<<std::endl;
 }
 
-bool CoapNode::checkIDCanceled(uint16_t id){
-	if(!m_idlist.empty()){
-		for (u_int32_t i=0; i<m_idlist.size(); ++i){
-			if( m_idlist[i].id==id && m_idlist[i].canceled==true) {
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
-void CoapNode::dumpIDList(){
-	if(!m_idlist.empty()){
-		for (u_int32_t i=0; i<m_idlist.size(); ++i){
-			NS_LOG_INFO ("IDLST "<<Simulator::Now().GetSeconds () <<"\t"<< m_idlist[i].id <<"\t"<< m_idlist[i].canceled);
-		}
-	}
-}
-
-bool CoapNode::addID(uint16_t id, EventId eid){
-	if(checkID(id)==false){
-		eventItem itm;
-		itm.id = id;
-		itm.eid = eid;
-		itm.canceled = false;
-		m_idlist.push_back(itm);
-		return true;
-	}
-	return false;
-
-}
-
-bool CoapNode::delID(uint16_t id){
-	if(!m_idlist.empty()){
-		for (u_int32_t i=0; i<m_idlist.size(); ++i){
-			if( m_idlist[i].id==id && m_idlist[i].canceled==false) {
-				m_idlist[i].canceled = true;
-				Simulator::Cancel(m_idlist[i].eid);
-				m_idlist[i].eid.Cancel();
-				//m_idlist.erase (m_idlist.begin()+i);
-				return true;
-			}
-		}
-	}
-	return false;
-}
 
 } // Namespace ns3

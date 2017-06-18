@@ -70,6 +70,11 @@
 #define RESPONSE_CODE(class, detail) ((class << 5) | (detail))
 #define COAP_OPTION_DELTA(v, n) (v < 13 ? (*n = (0xFF & v)) : (v <= 0xFF + 13 ? (*n = 13) : (*n = 14)))
 
+#define PKT_NOTFOUND 0
+#define PKT_DELAYED 1
+#define PKT_OUTDATED 2
+#define PKT_CANCELED 3
+
 namespace ns3 {
 
 	typedef enum {
@@ -222,6 +227,7 @@ class CoapNode : public Application{
 			// CACHE STUFF
 			int GetEntryIndex(size_t nodeid);
 			size_t getOldestEntry();
+
 			bool addEntry(Ipv4Address ip,std::string url,uint32_t maxAge);
 			bool updateEntry(Ipv4Address ip,std::string url,uint32_t maxAge);
 
@@ -232,23 +238,25 @@ class CoapNode : public Application{
 			bool existEntry(Ipv4Address ip, std::string url);
 
 			// DISCOVERY REQUESTS CACHE
+			bool existAnswEntry(std::vector<size_t> cacheansw, size_t hash);
 			bool addID(uint16_t id, EventId eid);
 			bool delID(uint16_t id);
-			bool checkID(uint16_t id);
-			bool checkIDCanceled(uint16_t id);
+			uint8_t checkID(uint16_t id);
+			bool updateID(uint16_t id, Ipv4Address ip, std::string url);
+			bool setIDStatus(uint16_t id, uint8_t status);
+			bool checkServiceInDelayedResponse(uint16_t id, Ipv4Address ip, std::string url);
 			void dumpIDList();
-
+			void saveLog(std::string texttolog);
 			// Tools
-			uint64_t Normal(double max);
+			uint64_t Uniform(double max);
 
 			void readServicesFile();
-
+			uint64_t getResponseTime();
 			std::string getTypeStr(uint8_t type);
 			std::string getMthStr(uint8_t type);
 
 			void checkCache();
 
-			uint32_t m_etag; //! Is it mcast or ucast answer?
 			uint32_t m_stime; //! Is it mcast or ucast answer?
 			uint32_t m_cacheinterval;
 
@@ -265,7 +273,8 @@ class CoapNode : public Application{
 			struct eventItem{
 				EventId eid;
 				uint16_t id;
-				bool canceled;
+				uint8_t status;
+				std::vector<size_t> cacheansw;
 			};
 
 			std::vector<eventItem> m_idlist;

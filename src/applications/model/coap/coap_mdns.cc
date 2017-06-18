@@ -376,14 +376,11 @@ int MDns::recvdns(Ptr<Packet> dnspacket, Address from) {
     answer_count = (data_buffer[6] << 8) + data_buffer[7];	    // Number of incoming answers.
     ns_count = (data_buffer[8] << 8) + data_buffer[9];	    // Number of incoming Name Server resource records.
     ar_count = (data_buffer[10] << 8) + data_buffer[11];	    // Number of incoming Additional resource records.
-    NS_LOG_INFO("\t|-> Q_LEN: "<< query_count<<"   A_LEN: "<<answer_count<<"   NS_LEN: "<<ns_count<<"   ADT_LEN: "<<ar_count);
-		NS_LOG_INFO("\t|-> UID: "<<mDNSId);
     // Start of Data section.
     buffer_pointer = 12;
     for (uint32_t i_question = 0; i_question < query_count; i_question++) {
       const Query query = Parse_Query();
       if (query.valid) {
-        NS_LOG_INFO("\t|-> QUERY: "<< query.qname_buffer);
         queries.push_back(query);
         /*
         struct Answer rransw;
@@ -404,7 +401,6 @@ int MDns::recvdns(Ptr<Packet> dnspacket, Address from) {
 			const Answer answer = Parse_Answer();
 			if (answer.valid) {
 			answers.push_back(answer);
-			NS_LOG_INFO("\t|-> ANSW: "<< answer.name_buffer<<" = "<< answer.rdata_buffer);
 			out = 2;
       }
     }

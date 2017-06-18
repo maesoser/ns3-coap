@@ -157,7 +157,7 @@ int main (int argc, char *argv[])
   double idleCurrent = 0.015; // Ampere
   double txCurrent = 0.120; // Ampere
   double txPowerStart = 0.0; // dbm
-  double txPowerEnd = 13.0; //
+  double txPowerEnd = 10.0; //
 
   uint32_t numNodes = 25;  // by default, 5x5
 

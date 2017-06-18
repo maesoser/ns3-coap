@@ -17,9 +17,16 @@ Ipv4Address CoapNode::GetAddr(){
   return addr;
 }
 
-uint64_t CoapNode::Normal(double max) {
+uint64_t CoapNode::Uniform(double max) {
 	ns3::Ptr<ns3::UniformRandomVariable> random = ns3::CreateObject<ns3::UniformRandomVariable>();
 	return random->GetValue(0.0, max);
+}
+
+uint64_t CoapNode::getResponseTime(){
+  uint16_t distime = 600;
+  uint64_t maxtime = 1000*CONF_WAIT_REPL*(3600.0/(3600.0+distime*m_cache.size()));
+  uint64_t dtime = Uniform(maxtime);
+  return dtime;
 }
 
 void CoapNode::splitlist( std::string &s, char delim, std::vector<std::string> &elems) {
@@ -38,7 +45,7 @@ std::vector<std::string> CoapNode::split( std::string &s, char delim) {
 }
 
 std::string CoapNode::getTypeStr(uint8_t type){
-    std::string result = "UNKNOWN";
+    std::string result = std::to_string(type);
     if(type==0) result = "COAP_CON";
     if(type==1) result = "COAP_NONCON";
     if(type==2) result = "COAP_ACK";
@@ -46,7 +53,7 @@ std::string CoapNode::getTypeStr(uint8_t type){
     return result;
 }
 std::string CoapNode::getMthStr(uint8_t type){
-  std::string result = "UNKNOWN";
+  std::string result = std::to_string(type);
   if(type==0) result = "COAP_NULL";
   if(type==1) result = "COAP_GET";
   if(type==2) result = "COAP_POST ";
