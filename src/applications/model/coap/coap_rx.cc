@@ -78,30 +78,32 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
           if(packet.payloadlen!=0){
             std::string payloadStr(packet.payload,packet.payload + packet.payloadlen);
             std::vector<std::string> vect = split(payloadStr,',');
-            for(std::string vitem:vect){
+            for(std::string vitem:vect){ // Go through the item on the packet
               std::string vname = split(vitem,';')[0];
               if(vname.length()>3){
                 vname = vname.substr(2,vname.length()-3);
               }else{
-                NS_LOG_INFO("!!! -ERROR- !!! LENGTH: "<< packet.payloadlen);
-                NS_LOG_INFO("!!! -ERROR- !!! PYLD  : "<< payloadStr);
-
+                NS_LOG_INFO("!!! -ERROR- !!! LENGTH: "<< packet.payloadlen<<"\t PAYLOAD: "<< payloadStr);
               }
               if(vname.find("/")!= std::string::npos){
                 Ipv4Address sip(split(vname,'/')[0].c_str());
                 std::string vser = split(vname,'/')[1];
                 if(m_stime==2){
+									// Register this service as one of the discovered services for the answer.
                   updateID(packet.messageid,sip,vser);
                 }
-		if (addEntry(sip,vser,recvAge)==false){
-			// If the sender is the same as the one depicted on the cache message, update it TTL
-			if (sip == InetSocketAddress::ConvertFrom(from).GetIpv4()){
-				updateEntry(sip, vser, recvAge);
-			}
-		}
+								if (addEntry(sip,vser,recvAge)==false){ // Add entry to our service cache
+									// If the sender is the same as the one depicted on the cache message, update it TTL
+									if (sip == InetSocketAddress::ConvertFrom(from).GetIpv4()){
+										updateEntry(sip, vser, recvAge);
+									}
+								}
                 //if(m_activatePing) ping(sip,COAP_DEFAULT_PORT);
-              }else{
+              }else{ // It is the proper service from the node
                 addEntry( InetSocketAddress::ConvertFrom (from).GetIpv4(),vname,recvAge);
+								if(m_stime==2){
+									updateID(packet.messageid,InetSocketAddress::ConvertFrom (from).GetIpv4(),vname);
+								}
                 //if(m_activatePing) ping(InetSocketAddress::ConvertFrom (from).GetIpv4(),COAP_DEFAULT_PORT);
               }
             }

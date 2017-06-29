@@ -75,6 +75,9 @@
 #define PKT_OUTDATED 2
 #define PKT_CANCELED 3
 
+#define ALL_OR_NOTHING 1
+#define PARTIAL_SELECTIVE 2
+
 namespace ns3 {
 
 	typedef enum {

@@ -30,12 +30,13 @@ uint16_t CoapNode::sendResponse(Ipv4Address ip, int port, uint16_t messageid, ch
 }
 
 void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid){
-  if(m_stime==1 && checkID(messageid)==PKT_CANCELED) {
+  if(m_stime==ALL_OR_NOTHING && checkID(messageid)==PKT_CANCELED) {
     setIDStatus(messageid,PKT_OUTDATED);
     NS_LOG_INFO (Simulator::Now ().GetSeconds () << " "<< GetAddr() <<" CANCELED ANSWER to " << Ipv4Address::ConvertFrom(ip)<< " ID:"<< messageid);
     return;
   }
-	if(m_stime==1 && checkID(messageid)==PKT_OUTDATED) {
+
+	if(m_stime==ALL_OR_NOTHING && checkID(messageid)==PKT_OUTDATED) {
 		return;
 	}
 
@@ -49,7 +50,7 @@ void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid){
   		u_int32_t i_actual = 0;
   		for (u_int32_t i=0; i<m_cache.size(); ++i){ // Go through the cache
   		  if(m_cache[i].ip!=ip){  // Check if we're trying to send our own services
-          if(m_stime==2){
+          if(m_stime==PARTIAL_SELECTIVE){
             servtotal +=1;
             if(checkServiceInDelayedResponse(messageid, m_cache[i].ip, m_cache[i].url)==false){
                 servvalid += 1;
