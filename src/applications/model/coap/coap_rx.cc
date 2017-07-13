@@ -4,7 +4,6 @@ using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("CoapNode_rx");
 
-
 bool CoapNode::recvDtg(Ptr<Socket> socket){
   uint8_t buffer[BUF_MAX_SIZE];
 
@@ -42,7 +41,6 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
           packetlen = dtgpacket->GetSize();
           continue;
       }
-
       // parse packet options/payload
       if (COAP_HEADER_SIZE + packet.tokenlen < packetlen) {
           int optionIndex = 0;
@@ -58,16 +56,14 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
 
           if (p+1 < end && *p == 0xFF) {
               packet.payload = p+1;
-              packet.payloadlen = end-(p+1);
+              packet.payloadlen = end - (p+1);
           } else {
               packet.payload = NULL;
               packet.payloadlen= 0;
           }
       }
-
-      if (packet.type == COAP_ACK) {  // It is a RESPONSE
-					if(m_stime==1) delID(packet.messageid);
-
+      if (packet.type == COAP_ACK) {  // It is a RESPONSE!!
+					if(m_stime==ALL_OR_NOTHING) delID(packet.messageid);
           uint32_t recvAge = 0x00;
           for (int i = 0; i < packet.optionnum; i++) {
               if (packet.options[i].number == COAP_MAX_AGE && packet.options[i].length > 0) {
@@ -76,7 +72,7 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
               }
           }
           if(packet.payloadlen!=0){
-            std::string payloadStr(packet.payload,packet.payload + packet.payloadlen);
+            std::string payloadStr(packet.payload, packet.payload + packet.payloadlen);
             std::vector<std::string> vect = split(payloadStr,',');
             for(std::string vitem:vect){ // Go through the item on the packet
               std::string vname = split(vitem,';')[0];
@@ -88,10 +84,8 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
               if(vname.find("/")!= std::string::npos){
                 Ipv4Address sip(split(vname,'/')[0].c_str());
                 std::string vser = split(vname,'/')[1];
-                if(m_stime==2){
-									// Register this service as one of the discovered services for the answer.
-                  updateID(packet.messageid,sip,vser);
-                }
+                NS_LOG_INFO( GetAddr() << "UPDT "<< packet.messageid << "\t" << sip<< "" << vser);
+                updateID(packet.messageid,sip,vser);  									// Register this service as one of the discovered services for the answer.
 								if (addEntry(sip,vser,recvAge)==false){ // Add entry to our service cache
 									// If the sender is the same as the one depicted on the cache message, update it TTL
 									if (sip == InetSocketAddress::ConvertFrom(from).GetIpv4()){
@@ -101,9 +95,8 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
                 //if(m_activatePing) ping(sip,COAP_DEFAULT_PORT);
               }else{ // It is the proper service from the node
                 addEntry( InetSocketAddress::ConvertFrom (from).GetIpv4(),vname,recvAge);
-								if(m_stime==2){
-									updateID(packet.messageid,InetSocketAddress::ConvertFrom (from).GetIpv4(),vname);
-								}
+                updateEntry(InetSocketAddress::ConvertFrom (from).GetIpv4(), vname, recvAge); // ¿?
+                updateID(packet.messageid,InetSocketAddress::ConvertFrom (from).GetIpv4(),vname);
                 //if(m_activatePing) ping(InetSocketAddress::ConvertFrom (from).GetIpv4(),COAP_DEFAULT_PORT);
               }
             }
@@ -111,7 +104,6 @@ bool CoapNode::recvDtg(Ptr<Socket> socket){
       }
       else if (packet.type == COAP_CON && packet.code != 0x00) { // It is a request
           // call endpoint url function
-
           std::string url = "";
           uint32_t recvAge = 0;
           for (int i = 0; i < packet.optionnum; i++) {

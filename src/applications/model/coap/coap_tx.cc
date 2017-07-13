@@ -30,55 +30,85 @@ uint16_t CoapNode::sendResponse(Ipv4Address ip, int port, uint16_t messageid, ch
 }
 
 void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid){
-  if(m_stime==ALL_OR_NOTHING && checkID(messageid)==PKT_CANCELED) {
+
+	// Si el apquete ya ha sido respondido, nada
+  if(m_stime > 0 && checkID(messageid)==PKT_CANCELED) {
     setIDStatus(messageid,PKT_OUTDATED);
+		NS_LOG_INFO(Simulator::Now ().GetSeconds () <<" M_STIME from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4Address::ConvertFrom(ip) << " CACHE: "<<0<< " of "<<m_cache.size()+1);
     NS_LOG_INFO (Simulator::Now ().GetSeconds () << " "<< GetAddr() <<" CANCELED ANSWER to " << Ipv4Address::ConvertFrom(ip)<< " ID:"<< messageid);
     return;
   }
 
-	if(m_stime==ALL_OR_NOTHING && checkID(messageid)==PKT_OUTDATED) {
+	// Si el paquete ha caducado, nada
+	if(m_stime > 0 && checkID(messageid)==PKT_OUTDATED) {
+		NS_LOG_INFO(Simulator::Now ().GetSeconds () <<" M_STIME from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4Address::ConvertFrom(ip) << " CACHE: "<<0<< " of "<<m_cache.size()+1);
 		return;
 	}
 
-  int servtotal = 0;
-  int servvalid = 0;
+  u_int32_t total_possible = 1; // Total servicios en cache
+	u_int32_t i_partial = 0; // total envio parcial
+	u_int32_t i_total = 0; // total enviados
 
   std::string result = "";
-  if(m_cacheopt!=0){ // If send_cache is ON
-	  deleteOutdated();  // Delete outdated entries
-	  if(!m_cache.empty()){  // Check if the cache is empty
-  		u_int32_t i_actual = 0;
+  std::string totalresult = "";
+
+  deleteOutdated();  // Delete outdated entries
+  if(m_cacheopt!=0 && !m_cache.empty()){  // Check if the cache is empty
   		for (u_int32_t i=0; i<m_cache.size(); ++i){ // Go through the cache
-  		  if(m_cache[i].ip!=ip){  // Check if we're trying to send our own services
-          if(m_stime==PARTIAL_SELECTIVE){
-            servtotal +=1;
-            if(checkServiceInDelayedResponse(messageid, m_cache[i].ip, m_cache[i].url)==false){
-                servvalid += 1;
+  		  if(m_cache[i].ip!=ip){  // Evita que le rewspondamos con su propio servicio
+              total_possible ++;
+              if(m_stime==PARTIAL_SELECTIVE){
+                if(checkServiceInDelayedResponse(messageid, m_cache[i].ip, m_cache[i].url)==false){
+                    result = result + "</"+Ipv4AddressToString(m_cache[i].ip)+ "/" +m_cache[i].url+ ">;title=\"This is a test\",";
+                    i_partial++;
+                }
+              }else{
                 result = result + "</"+Ipv4AddressToString(m_cache[i].ip)+ "/" +m_cache[i].url+ ">;title=\"This is a test\",";
-                i_actual++;
+                i_partial++;
               }
-          }else{
-            result = result + "</"+Ipv4AddressToString(m_cache[i].ip)+ "/" +m_cache[i].url+ ">;title=\"This is a test\",";
-            i_actual++;
-          }
   		  }
-  		  if(i_actual==3){
-  			i_actual = 0;
-  			sendCachePart(ip,port, messageid, result);
-  			result = "";
+        /*   THIS CODE SPLIT UP MESSAGES IN APPLICATION LAYER. DONT
+  		  if(i_partial==4){
+					i_total += i_partial;
+          totalresult += result;
+    			sendCachePart(ip,port, messageid, result);
+          i_partial = 0;
+    			result = "";
   		  }
+         */
   		}
-	  }
   }
-  result = result +"</temp>;title=\"This is the local temperature sensor\"";
+	/* Now we manage our own service */
+	if(m_stime==PARTIAL_SELECTIVE){
+		if(checkServiceInDelayedResponse(messageid, GetAddr(), "temp")==false){
+			result = result +"</temp>;title=\"This is the local temperature sensor\"";
+			i_partial ++;
+		}
+	}else{
+      	result = result +"</temp>;title=\"This is the local temperature sensor\"";
+        i_partial ++;
+	}
+
+    i_total += i_partial;
+    totalresult += result;
+    setIDStatus(messageid,PKT_OUTDATED); // xq ya no es válido, lo he enviado una vez
+
+  // If we do not have anything to send, dont send it
+  if(m_stime==PARTIAL_SELECTIVE && i_partial==0){  // No más que enviar
+    NS_LOG_INFO(Simulator::Now ().GetSeconds () <<" M_STIME from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4Address::ConvertFrom(ip) << " CACHE: 0 of "<< total_possible);
+    return;
+  }
+
+  NS_LOG_INFO(Simulator::Now ().GetSeconds () <<" M_STIME from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4Address::ConvertFrom(ip) << " CACHE: "<<i_total<< " of "<< total_possible);
+
   if(m_mcast){
-      NS_LOG_INFO("DEBUG INFO TOTL "<< servtotal <<" SENT "<< servvalid);
       sendCachePart(m_mcastAddr,port, messageid,result);
   }
   else{
     sendCachePart(ip,port, messageid,result);
   }
-  setIDStatus(messageid,PKT_OUTDATED); // xq ya no es válido, lo he enviado una vez
+	NS_LOG_INFO("DEBUG RESULT: "<< totalresult);
+
 }
 
 uint16_t CoapNode::sendCoap(Ipv4Address ip, int port, char *url, COAP_TYPE type, COAP_METHOD method, uint8_t *token, uint8_t tokenlen, uint8_t *payload, uint32_t payloadlen) {
@@ -245,7 +275,7 @@ uint16_t CoapNode::sendDtg(CoapPacket &packet, Ipv4Address ip, int port) {
     *p |= (packet.type & 0x03) << 4;
     *p++ |= (packet.tokenlen & 0x0F);
     *p++ = packet.code;
-    *p++ = (packet.messageid >> 8);
+    *p++ = ((packet.messageid & 0xFF00) >> 8);
     *p++ = (packet.messageid & 0xFF);
     p = buffer + COAP_HEADER_SIZE;
     packetSize += 4;
@@ -287,7 +317,6 @@ uint16_t CoapNode::sendDtg(CoapPacket &packet, Ipv4Address ip, int port) {
             *p++ = (0xFF & (packet.options[i].length - 269));
             packetSize+=2;
         }
-
         memcpy(p, packet.options[i].buffer, packet.options[i].length);
         p += packet.options[i].length;
         packetSize += packet.options[i].length + 1;

@@ -49,9 +49,18 @@ std::string CoapNode::getTypeStr(uint8_t type){
     if(type==0) result = "COAP_CON";
     if(type==1) result = "COAP_NONCON";
     if(type==2) result = "COAP_ACK";
-    if(type==3) result = "OAP_RESET";
+    if(type==3) result = "COAP_RESET";
     return result;
 }
+
+/*
+void savelog(std::string logline){
+	Ptr<OutputStreamWrapper> cacheStream = Create<OutputStreamWrapper>(Ipv4AddressToString(GetAddr())+"_nodelog", std::ios::app);
+	std::ostream *stream = cacheStream->GetStream ();
+	*stream << logline <<std::endl;
+}
+*/
+
 std::string CoapNode::getMthStr(uint8_t type){
   std::string result = std::to_string(type);
   if(type==0) result = "COAP_NULL";

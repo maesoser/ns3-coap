@@ -227,7 +227,7 @@ void CoapNode::HandleDns(Ptr<Socket> socket){
       if (InetSocketAddress::IsMatchingType (from)){
         NS_LOG_INFO (Simulator::Now().GetSeconds () <<" "<< GetAddr() <<" RECV " << data_size << " bytes from " << InetSocketAddress::ConvertFrom (from).GetIpv4 () <<" DNS QUERY ID:"<< my_mdns.mDNSId);
       }
-			if(m_stime!=0){
+			if(m_stime!=0){	// DELAYED RESPONSE CODE
 				if(checkID(my_mdns.mDNSId)==PKT_NOTFOUND){
 					uint64_t dtime = getResponseTime();
 					Query delayed_query = my_mdns.queries[0];
@@ -244,7 +244,7 @@ void CoapNode::HandleDns(Ptr<Socket> socket){
       if (InetSocketAddress::IsMatchingType (from)){
         NS_LOG_INFO (Simulator::Now().GetSeconds () <<" "<< GetAddr() <<" RECV " << data_size << " bytes from " << InetSocketAddress::ConvertFrom (from).GetIpv4 () <<" DNS ANSWER ID:"<< my_mdns.mDNSId);
       }
-      if(m_stime==1){ // Borramos el ID ya que ha sido contestado con anterioridad
+      if(m_stime==ALL_OR_NOTHING){ // Borramos el ID ya que ha sido contestado con anterioridad
   		    delID(my_mdns.mDNSId);
       }
   		//NS_LOG_INFO("DEBUG ANSW LENGTH " << my_mdns.answers.size());
@@ -254,15 +254,14 @@ void CoapNode::HandleDns(Ptr<Socket> socket){
   				std::string puri(answer.rdata_buffer);
   				Ipv4Address mdip(split(puri,'/')[0].c_str());
   				std::string vser = split(puri,'/')[1];
-          if(m_stime==2){
-            updateID(my_mdns.mDNSId,mdip,vser);
+          if(m_stime==PARTIAL_SELECTIVE){
+            updateID(my_mdns.mDNSId, mdip, vser);
           }
   				if (addEntry(mdip, vser, (uint32_t) answer.rrttl)==false){
   					if (mdip == InetSocketAddress::ConvertFrom(from).GetIpv4()){
   						updateEntry(mdip, vser, m_ageTime);
   					}
   				}
-
   			  //NS_LOG_INFO("\t|-> ANSW: "<< answer.name_buffer<<" = "<< answer.rdata_buffer);
   			}
   		}

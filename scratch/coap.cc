@@ -147,7 +147,7 @@ void PhyStateTrace (std::string context, Time start, Time duration, enum WifiPhy
 int main (int argc, char *argv[])
 {
 
-  double distance = 500;  // meters
+  double distance = 50;  // meters, 500 es el límite de cobertura
   double RxGain   = -10; // dB   -> Antiguo valor era -10
   uint32_t speed = 0;
   double initialEnergy = 5000; // joule
@@ -181,7 +181,6 @@ int main (int argc, char *argv[])
   uint32_t cacheopt = 0;
   uint32_t mcastopt = 0;
   uint32_t cacheinterval = 30;
-  uint32_t etagopt = 0;
   uint32_t stimeopt = 0;
   // Routing Helpers
   smfHelper smf;
@@ -235,6 +234,8 @@ int main (int argc, char *argv[])
       LogComponentEnable ("CoapNode_rx", LOG_LEVEL_INFO);
       LogComponentEnable ("CoapNode_cache", LOG_LEVEL_INFO);
       LogComponentEnable ("Coap_mDNS", LOG_LEVEL_INFO);
+			LogComponentEnable ("Coap_mDNS", LOG_LEVEL_INFO);
+			LogComponentEnable ("CoapNode_srep", LOG_LEVEL_INFO);
       break;
     default:
       break;
@@ -414,7 +415,6 @@ int main (int argc, char *argv[])
   coapnode.SetAttribute ("useMaxAge",UintegerValue (maxAge));   // default maxAge
   coapnode.SetAttribute ("mDNS",UintegerValue(mDnsOn));
   coapnode.SetAttribute ("ping",UintegerValue(pingopt));	  // Tha's useful if you want to verify pings
-  coapnode.SetAttribute ("etag",UintegerValue(etagopt));
   coapnode.SetAttribute ("stime",UintegerValue(stimeopt));
   coapnode.SetAttribute ("cacheInterval",UintegerValue(cacheinterval));	  // Tha's useful if you want to verify pings
 

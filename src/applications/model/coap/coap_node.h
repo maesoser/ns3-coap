@@ -62,7 +62,7 @@
 #define COAP_OPTION_HEADER_SIZE 1
 #define COAP_PAYLOAD_MARKER 0xFF
 #define MAX_OPTION_NUM 10
-#define BUF_MAX_SIZE 512
+#define BUF_MAX_SIZE 3072
 #define COAP_DEFAULT_PORT 5683
 
 #define MAX_DNSPACKET_SIZE 2048
@@ -160,7 +160,7 @@ typedef enum {
 	    uint8_t *token;
 	    uint8_t tokenlen;
 	    uint8_t *payload;
-	    uint8_t payloadlen;
+	    uint32_t payloadlen;
 	    uint16_t messageid;
 
 	    uint8_t optionnum;
@@ -241,7 +241,8 @@ class CoapNode : public Application{
 			bool existEntry(Ipv4Address ip, std::string url);
 
 			// DISCOVERY REQUESTS CACHE
-			bool existAnswEntry(std::vector<size_t> cacheansw, size_t hash);
+			void showAnswList(std::vector<std::string> cacheansw);
+			bool existAnswEntry(std::vector<std::string> cacheansw, std::string hash);
 			bool addID(uint16_t id, EventId eid);
 			bool delID(uint16_t id);
 			uint8_t checkID(uint16_t id);
@@ -257,7 +258,7 @@ class CoapNode : public Application{
 			uint64_t getResponseTime();
 			std::string getTypeStr(uint8_t type);
 			std::string getMthStr(uint8_t type);
-
+            //void savelog(std::string logline);
 			void checkCache();
 
 			uint32_t m_stime; //! Is it mcast or ucast answer?
@@ -276,8 +277,10 @@ class CoapNode : public Application{
 			struct eventItem{
 				EventId eid;
 				uint16_t id;
+				uint16_t counter;
 				uint8_t status;
-				std::vector<size_t> cacheansw;
+				//std::vector<size_t> cacheansw;
+				std::vector<std::string> cacheansw;
 			};
 
 			std::vector<eventItem> m_idlist;
