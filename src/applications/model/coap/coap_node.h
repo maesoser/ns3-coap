@@ -1,4 +1,5 @@
 /* -*- Mode:C++; c-file-style:"gnu"; indent-tabs-mode:nil; -*- */
+
 /*
  * Copyright 2007 University of Washington
  *
@@ -68,7 +69,12 @@
 #define MAX_DNSPACKET_SIZE 2048
 
 #define RESPONSE_CODE(class, detail) ((class << 5) | (detail))
-#define COAP_OPTION_DELTA(v, n) (v < 13 ? (*n = (0xFF & v)) : (v <= 0xFF + 13 ? (*n = 13) : (*n = 14)))
+#define COAP_OPTION_DELTA(v,                                                   \
+                          n) (v <                                              \
+                              13 ? (*n = (0xFF & v)) : (v <=                   \
+                                                        0xFF +                 \
+                                                        13 ? (*n = 13) : (*n = \
+                                                                            14)))
 
 #define PKT_NOTFOUND 0
 #define PKT_DELAYED 1
@@ -79,229 +85,302 @@
 #define PARTIAL_SELECTIVE 2
 
 namespace ns3 {
-
-	typedef enum {
-	    COAP_CON = 0,
-	    COAP_NONCON = 1,
-	    COAP_ACK = 2,
-	    COAP_RESET = 3
-	} COAP_TYPE;
-
-	typedef enum {
-			COAP_NULL = 0,
-	    COAP_GET = 1,
-	    COAP_POST = 2,
-	    COAP_PUT = 3,
-	    COAP_DELETE = 4
-	} COAP_METHOD;
-
-	typedef enum {
-	    COAP_CREATED = RESPONSE_CODE(2, 1),
-	    COAP_DELETED = RESPONSE_CODE(2, 2),
-	    COAP_VALID = RESPONSE_CODE(2, 3),
-	    COAP_CHANGED = RESPONSE_CODE(2, 4),
-	    COAP_CONTENT = RESPONSE_CODE(2, 5),
-	    COAP_BAD_REQUEST = RESPONSE_CODE(4, 0),
-	    COAP_UNAUTHORIZED = RESPONSE_CODE(4, 1),
-	    COAP_BAD_OPTION = RESPONSE_CODE(4, 2),
-	    COAP_FORBIDDEN = RESPONSE_CODE(4, 3),
-	    COAP_NOT_FOUNT = RESPONSE_CODE(4, 4),
-	    COAP_METHOD_NOT_ALLOWD = RESPONSE_CODE(4, 5),
-	    COAP_NOT_ACCEPTABLE = RESPONSE_CODE(4, 6),
-	    COAP_PRECONDITION_FAILED = RESPONSE_CODE(4, 12),
-	    COAP_REQUEST_ENTITY_TOO_LARGE = RESPONSE_CODE(4, 13),
-	    COAP_UNSUPPORTED_CONTENT_FORMAT = RESPONSE_CODE(4, 15),
-	    COAP_INTERNAL_SERVER_ERROR = RESPONSE_CODE(5, 0),
-	    COAP_NOT_IMPLEMENTED = RESPONSE_CODE(5, 1),
-	    COAP_BAD_GATEWAY = RESPONSE_CODE(5, 2),
-	    COAP_SERVICE_UNAVALIABLE = RESPONSE_CODE(5, 3),
-	    COAP_GATEWAY_TIMEOUT = RESPONSE_CODE(5, 4),
-	    COAP_PROXYING_NOT_SUPPORTED = RESPONSE_CODE(5, 5)
-	} COAP_RESPONSE_CODE;
+typedef enum {
+  COAP_CON    = 0,
+  COAP_NONCON = 1,
+  COAP_ACK    = 2,
+  COAP_RESET  = 3
+} COAP_TYPE;
 
 typedef enum {
-	    COAP_IF_MATCH = 1,
-	    COAP_URI_HOST = 3,
-	    COAP_E_TAG = 4,
-	    COAP_IF_NONE_MATCH = 5,
-	    COAP_URI_PORT = 7,
-	    COAP_LOCATION_PATH = 8,
-	    COAP_URI_PATH = 11,
-	    COAP_CONTENT_FORMAT = 12,
-	    COAP_MAX_AGE = 14,
-	    COAP_URI_QUERY = 15,
-	    COAP_ACCEPT = 17,
-	    COAP_LOCATION_QUERY = 20,
-	    COAP_PROXY_URI = 35,
-	    COAP_PROXY_SCHEME = 39
-	} COAP_OPTION_NUMBER;
+  COAP_NULL   = 0,
+  COAP_GET    = 1,
+  COAP_POST   = 2,
+  COAP_PUT    = 3,
+  COAP_DELETE = 4
+} COAP_METHOD;
 
 typedef enum {
-	    COAP_NONE = -1,
-	    COAP_TEXT_PLAIN = 0,
-	    COAP_APPLICATION_LINK_FORMAT = 40,
-	    COAP_APPLICATION_XML = 41,
-	    COAP_APPLICATION_OCTET_STREAM = 42,
-	    COAP_APPLICATION_EXI = 47,
-	    COAP_APPLICATION_JSON = 50
-	} COAP_CONTENT_TYPE;
+  COAP_CREATED                    = RESPONSE_CODE(2, 1),
+  COAP_DELETED                    = RESPONSE_CODE(2, 2),
+  COAP_VALID                      = RESPONSE_CODE(2, 3),
+  COAP_CHANGED                    = RESPONSE_CODE(2, 4),
+  COAP_CONTENT                    = RESPONSE_CODE(2, 5),
+  COAP_BAD_REQUEST                = RESPONSE_CODE(4, 0),
+  COAP_UNAUTHORIZED               = RESPONSE_CODE(4, 1),
+  COAP_BAD_OPTION                 = RESPONSE_CODE(4, 2),
+  COAP_FORBIDDEN                  = RESPONSE_CODE(4, 3),
+  COAP_NOT_FOUNT                  = RESPONSE_CODE(4, 4),
+  COAP_METHOD_NOT_ALLOWD          = RESPONSE_CODE(4, 5),
+  COAP_NOT_ACCEPTABLE             = RESPONSE_CODE(4, 6),
+  COAP_PRECONDITION_FAILED        = RESPONSE_CODE(4, 12),
+  COAP_REQUEST_ENTITY_TOO_LARGE   = RESPONSE_CODE(4, 13),
+  COAP_UNSUPPORTED_CONTENT_FORMAT = RESPONSE_CODE(4, 15),
+  COAP_INTERNAL_SERVER_ERROR      = RESPONSE_CODE(5, 0),
+  COAP_NOT_IMPLEMENTED            = RESPONSE_CODE(5, 1),
+  COAP_BAD_GATEWAY                = RESPONSE_CODE(5, 2),
+  COAP_SERVICE_UNAVALIABLE        = RESPONSE_CODE(5, 3),
+  COAP_GATEWAY_TIMEOUT            = RESPONSE_CODE(5, 4),
+  COAP_PROXYING_NOT_SUPPORTED     = RESPONSE_CODE(5, 5)
+} COAP_RESPONSE_CODE;
 
-	class CoapOption {
-	    public:
-		    uint8_t number;
-		    uint8_t length;
-		    uint8_t *buffer;
-	};
+typedef enum {
+  COAP_IF_MATCH       = 1,
+  COAP_URI_HOST       = 3,
+  COAP_E_TAG          = 4,
+  COAP_IF_NONE_MATCH  = 5,
+  COAP_URI_PORT       = 7,
+  COAP_LOCATION_PATH  = 8,
+  COAP_URI_PATH       = 11,
+  COAP_CONTENT_FORMAT = 12,
+  COAP_MAX_AGE        = 14,
+  COAP_URI_QUERY      = 15,
+  COAP_ACCEPT         = 17,
+  COAP_LOCATION_QUERY = 20,
+  COAP_PROXY_URI      = 35,
+  COAP_PROXY_SCHEME   = 39
+} COAP_OPTION_NUMBER;
 
-	class CoapPacket {
-	    public:
-	    uint8_t type;
-	    uint8_t code;
-	    uint8_t *token;
-	    uint8_t tokenlen;
-	    uint8_t *payload;
-	    uint32_t payloadlen;
-	    uint16_t messageid;
+typedef enum {
+  COAP_NONE                     = -1,
+  COAP_TEXT_PLAIN               = 0,
+  COAP_APPLICATION_LINK_FORMAT  = 40,
+  COAP_APPLICATION_XML          = 41,
+  COAP_APPLICATION_OCTET_STREAM = 42,
+  COAP_APPLICATION_EXI          = 47,
+  COAP_APPLICATION_JSON         = 50
+} COAP_CONTENT_TYPE;
 
-	    uint8_t optionnum;
-	    CoapOption options[MAX_OPTION_NUM];
-	};
+class CoapOption {
+public:
 
-	struct coapCacheItem{
-		Ipv4Address ip;
-		uint32_t age;
-		std::string url;
-		std::string title;
-	};
+  uint8_t number;
+  uint8_t length;
+  uint8_t *buffer;
+};
+
+class CoapPacket {
+public:
+
+  uint8_t type;
+  uint8_t code;
+  uint8_t *token;
+  uint8_t tokenlen;
+  uint8_t *payload;
+  uint32_t payloadlen;
+  uint16_t messageid;
+
+  uint8_t optionnum;
+  CoapOption options[MAX_OPTION_NUM];
+};
+
+struct coapCacheItem {
+  Ipv4Address ip;
+  uint32_t    age;
+  std::string url;
+  std::string title;
+};
 
 
 class Socket;
 class Packet;
 
-class CoapNode : public Application{
-		public:
-			CoapNode ();
-			virtual ~CoapNode ();
-			static TypeId GetTypeId (void);
-			Ipv4Address GetAddr();
-			Ptr<Socket> m_dnssocket;
-			TracedCallback<Ptr<const Packet> > m_txTrace;     /// Callbacks for tracing the packet Tx events
-			std::vector<struct ns3::coapCacheItem> m_cache;
+class CoapNode : public Application {
+public:
 
-		protected:
-			virtual void DoDispose (void);
-		private:
-			virtual void StartApplication (void);
-			virtual void StopApplication (void);
-			void splitlist( std::string &s, char delim, std::vector<std::string> &elems);
-			std::vector<std::string> split( std::string &s, char delim);
-			void ScheduleTransmit (Time dt);
-			void SchedulePurgeCache (uint32_t deltime);
+  CoapNode();
+  virtual ~CoapNode();
+  static TypeId GetTypeId(void);
+  Ipv4Address   GetAddr();
+  Ptr<Socket>m_dnssocket;
+  TracedCallback<Ptr<const Packet> >m_txTrace; /// Callbacks for tracing the
+                                               // packet Tx events
+  std::vector<struct ns3::coapCacheItem>m_cache;
 
-			// RECEIVE THINGS
-			void HandleDns(Ptr<Socket> socket);
-			void HandleRead (Ptr<Socket> socket);
-			int parseOption(CoapOption *option, uint16_t *running_delta, uint8_t **buf, size_t buflen);
-			bool recvDtg(Ptr<Socket> socket);
-			std::string Ipv4AddressToString (Ipv4Address ad);
+protected:
 
-			// SEND THINGS
-			// Prepares the packet to be sent
-			uint16_t sendCoap(Ipv4Address ip, int port, char *url, COAP_TYPE type, COAP_METHOD method, uint8_t *token, uint8_t tokenlen, uint8_t *payload, uint32_t payloadlen);
-			// Make last things and send the datagram
-			uint16_t sendDtg(CoapPacket &packet, Ipv4Address ip, int port);
-			// Bindings for common send operations
-			uint16_t get(Ipv4Address ip, int port, char *url);
-			uint16_t put(Ipv4Address ip, int port, char *url, char *payload);
-			uint16_t put(Ipv4Address ip, int port, char *url, char *payload, int payloadlen);
-			//Deal wioth the scheduling thing and all that stuff
-			void SendDiscovery();
-			void sendCache(Ipv4Address ip, int port, uint16_t messageid);
-			void sendMDnsCache(Query query, Address from, uint16_t messageid);
-			void ping(Ipv4Address ip, int port);
-			void sendCachePart(Ipv4Address ip, int port, uint16_t messageid,std::string payloadstr);
-			// Send responses (Taking care of messageid and changing some other things)
-			uint16_t sendResponse(Ipv4Address ip, int port, uint16_t messageid);
-			uint16_t sendResponse(Ipv4Address ip, int port, uint16_t messageid, char *payload);
-			uint16_t sendResponse(Ipv4Address ip, int port, uint16_t messageid, char *payload, int payloadlen);
-			uint16_t sendResponse(Ipv4Address ip, int port, uint16_t messageid, char *payload, int payloadlen,COAP_RESPONSE_CODE code, COAP_CONTENT_TYPE type, uint8_t *token, int tokenlen);
-			void sendmDnsRequest();
+  virtual void DoDispose(void);
 
-			// CACHE STUFF
-			int GetEntryIndex(size_t nodeid);
-			size_t getOldestEntry();
+private:
 
-			bool addEntry(Ipv4Address ip,std::string url,uint32_t maxAge);
-			bool updateEntry(Ipv4Address ip,std::string url,uint32_t maxAge);
+  virtual void            StartApplication(void);
+  virtual void            StopApplication(void);
+  void                    splitlist(std::string             & s,
+                                    char                      delim,
+                                    std::vector<std::string>& elems);
+  std::vector<std::string>split(std::string& s,
+                                char         delim);
+  void                    ScheduleTransmit(Time dt);
+  void                    SchedulePurgeCache(uint32_t deltime);
 
-			bool deleteEntry(size_t nodeid);
-			uint32_t deleteOutdated();
-			void showCache();
-			void saveCache();
-			bool existEntry(Ipv4Address ip, std::string url);
+  // RECEIVE THINGS
+  void                    HandleDns(Ptr<Socket>socket);
+  void                    HandleRead(Ptr<Socket>socket);
+  int                     parseOption(CoapOption *option,
+                                      uint16_t   *running_delta,
+                                      uint8_t   **buf,
+                                      size_t      buflen);
+  bool        recvDtg(Ptr<Socket>socket);
+  std::string Ipv4AddressToString(Ipv4Address ad);
 
-			// DISCOVERY REQUESTS CACHE
-			void showAnswList(std::vector<std::string> cacheansw);
-			bool existAnswEntry(std::vector<std::string> cacheansw, std::string hash);
-			bool addID(uint16_t id, EventId eid);
-			bool delID(uint16_t id);
-			uint8_t checkID(uint16_t id);
-			bool updateID(uint16_t id, Ipv4Address ip, std::string url);
-			bool setIDStatus(uint16_t id, uint8_t status);
-			bool checkServiceInDelayedResponse(uint16_t id, Ipv4Address ip, std::string url);
-			void dumpIDList();
-			void saveLog(std::string texttolog);
-			// Tools
-			uint64_t Uniform(double max);
+  // SEND THINGS
+  // Prepares the packet to be sent
+  uint16_t sendCoap(Ipv4Address ip,
+                    int         port,
+                    char       *url,
+                    COAP_TYPE   type,
+                    COAP_METHOD method,
+                    uint8_t    *token,
+                    uint8_t     tokenlen,
+                    uint8_t    *payload,
+                    uint32_t    payloadlen);
 
-			void readServicesFile();
-			uint64_t getResponseTime();
-			std::string getTypeStr(uint8_t type);
-			std::string getMthStr(uint8_t type);
-            //void savelog(std::string logline);
-			void checkCache();
+  // Make last things and send the datagram
+  uint16_t sendDtg(CoapPacket& packet,
+                   Ipv4Address ip,
+                   int         port);
 
-			uint32_t m_stime; //! Is it mcast or ucast answer?
-			uint32_t m_cacheinterval;
+  // Bindings for common send operations
+  uint16_t get(Ipv4Address ip,
+               int         port,
+               char       *url);
+  uint16_t put(Ipv4Address ip,
+               int         port,
+               char       *url,
+               char       *payload);
+  uint16_t put(Ipv4Address ip,
+               int         port,
+               char       *url,
+               char       *payload,
+               int         payloadlen);
 
-			uint32_t m_mcast; //! Is it mcast or ucast answer?
-			uint16_t m_dataType; //! Is it get disco or get temp
-			uint16_t m_port; //!< Port on which we listen for incoming packets.
-			Time m_interval; //!< Packet inter-send time
-			uint32_t m_startDelay;	//! Retraso inicial en el envío de peticiones
-			uint32_t m_count; //! Número máximos de peticiones
-			bool m_petitionLimit;
-			uint32_t m_ageTime;	//! TTL del caché
-			uint16_t m_cacheopt;
+  // Deal wioth the scheduling thing and all that stuff
+  void SendDiscovery();
+  void sendCache(Ipv4Address ip,
+                 int         port,
+                 uint16_t    messageid);
+  void sendMDnsCache(Query    query,
+                     Address  from,
+                     uint16_t messageid);
+  void ping(Ipv4Address ip,
+            int         port);
+  void sendCachePart(Ipv4Address ip,
+                     int         port,
+                     uint16_t    messageid,
+                     std::string payloadstr);
 
-			struct eventItem{
-				EventId eid;
-				uint16_t id;
-				uint16_t counter;
-				uint8_t status;
-				//std::vector<size_t> cacheansw;
-				std::vector<std::string> cacheansw;
-			};
+  // Send responses (Taking care of messageid and changing some other things)
+  uint16_t sendResponse(Ipv4Address ip,
+                        int         port,
+                        uint16_t    messageid);
+  uint16_t sendResponse(Ipv4Address ip,
+                        int         port,
+                        uint16_t    messageid,
+                        char       *payload);
+  uint16_t sendResponse(Ipv4Address ip,
+                        int         port,
+                        uint16_t    messageid,
+                        char       *payload,
+                        int         payloadlen);
+  uint16_t sendResponse(Ipv4Address        ip,
+                        int                port,
+                        uint16_t           messageid,
+                        char              *payload,
+                        int                payloadlen,
+                        COAP_RESPONSE_CODE code,
+                        COAP_CONTENT_TYPE  type,
+                        uint8_t           *token,
+                        int                tokenlen);
+  void   sendmDnsRequest();
 
-			std::vector<eventItem> m_idlist;
+  // CACHE STUFF
+  int    GetEntryIndex(size_t nodeid);
+  size_t getOldestEntry();
 
-			uint8_t *m_data; //!< packet payload data
-			Ptr<Socket> m_socket; //!< IPv4 Socket
-			Ptr<Socket> m_socket6; //!< IPv6 Socket
+  bool   addEntry(Ipv4Address ip,
+                  std::string url,
+                  uint32_t    maxAge);
+  bool   updateEntry(Ipv4Address ip,
+                     std::string url,
+                     uint32_t    maxAge);
 
-			Address m_local; //!< local multicast address
+  bool     deleteEntry(size_t nodeid);
+  uint32_t deleteOutdated();
+  void     showCache();
+  void     saveCache();
+  bool     existEntry(Ipv4Address ip,
+                      std::string url);
 
-			Ipv4Address m_mcastAddr;
+  // DISCOVERY REQUESTS CACHE
+  void        showAnswList(std::vector<std::string>cacheansw);
+  bool        existAnswEntry(std::vector<std::string>cacheansw,
+                             std::string             hash);
+  bool        addID(uint16_t id,
+                    EventId  eid);
+  bool        delID(uint16_t id);
+  uint8_t     checkID(uint16_t id);
+  bool        updateID(uint16_t    id,
+                       Ipv4Address ip,
+                       std::string url);
+  bool        setIDStatus(uint16_t id,
+                          uint8_t  status);
+  bool        checkServiceInDelayedResponse(uint16_t    id,
+                                            Ipv4Address ip,
+                                            std::string url);
+  void        dumpIDList();
+  void        saveLog(std::string texttolog);
 
-			EventId m_sendEvent; //!< Event to send the next packet
-			EventId m_showCache;
+  // Tools
+  uint64_t    Uniform(double max);
+
+  void        readServicesFile();
+  uint64_t    getResponseTime();
+  std::string getTypeStr(uint8_t type);
+  std::string getMthStr(uint8_t type);
+
+  // void savelog(std::string logline);
+  void        checkCache();
+
+  uint32_t m_stime;      // ! Is it mcast or ucast answer?
+  uint32_t m_cacheinterval;
+
+  uint32_t m_mcast;      // ! Is it mcast or ucast answer?
+  uint16_t m_dataType;   // ! Is it get disco or get temp
+  uint16_t m_port;       // !< Port on which we listen for incoming packets.
+  Time m_interval;       // !< Packet inter-send time
+  uint32_t m_startDelay; // ! Retraso inicial en el envío de peticiones
+  uint32_t m_count;      // ! Número máximos de peticiones
+  bool m_petitionLimit;
+  uint32_t m_ageTime;    // ! TTL del caché
+  uint16_t m_cacheopt;
+
+  struct eventItem {
+    EventId  eid;
+    uint16_t id;
+    uint16_t counter;
+    uint8_t  status;
+
+    // std::vector<size_t> cacheansw;
+    std::vector<std::string>cacheansw;
+  };
+
+  std::vector<eventItem>m_idlist;
+
+  uint8_t *m_data;      // !< packet payload data
+  Ptr<Socket>m_socket;  // !< IPv4 Socket
+  Ptr<Socket>m_socket6; // !< IPv6 Socket
+
+  Address m_local;      // !< local multicast address
+
+  Ipv4Address m_mcastAddr;
+
+  EventId m_sendEvent; // !< Event to send the next packet
+  EventId m_showCache;
 
 
-			uint32_t m_activatemDns = 0;
-            uint32_t m_activatePing = 0;
-
-	}; // Class coapNode
-
+  uint32_t m_activatemDns = 0;
+  uint32_t m_activatePing = 0;
+}; // Class coapNode
 } // namespace ns3
 
 #endif /* COAP_NODE_H */
