@@ -286,6 +286,7 @@ void CoapNode::HandleDns(Ptr<Socket>socket) {
           // NS_LOG_INFO("\t|-> ANSW: "<< answer.name_buffer<<" = "<< answer.rdata_buffer);
         }
       }
+      deleteOutdated();
     }
   }
 }

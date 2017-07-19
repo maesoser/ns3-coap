@@ -59,7 +59,7 @@ void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid) {
         total_possible++;
 
         if (m_stime == PARTIAL_SELECTIVE) {
-          if (checkServiceInDelayedResponse(messageid, m_cache[i].ip, m_cache[i].url) == false) {
+          if (checkServiceInDelayedResponse(messageid, m_cache[i].ip, m_cache[i].url) == false && m_cache[i].age < Simulator::Now().GetSeconds()) {
             result = result + "</" + Ipv4AddressToString(m_cache[i].ip) + "/" + m_cache[i].url + ">;title=\"This is a test\",";
             i_partial++;
           }

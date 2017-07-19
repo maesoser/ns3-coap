@@ -418,20 +418,39 @@ int main (int argc, char *argv[])
   coapnode.SetAttribute ("stime",UintegerValue(stimeopt));
   coapnode.SetAttribute ("cacheInterval",UintegerValue(cacheinterval));	  // Tha's useful if you want to verify pings
 
-  apps = coapnode.Install(nodes);
+  //apps = coapnode.Install(nodes);
+  apps = coapnode.Install(nodes.Get (0));
   apps.Start (Seconds (0.0));
-
   NS_LOG_INFO ("SIM TIME: " << runtime);
-
   if(runtime>900){
     apps.Stop (Seconds (runtime - 300));
     NS_LOG_INFO ("APPTIME: " << runtime -300);
   }else{
     apps.Stop (Seconds ((2*runtime)/3));
     NS_LOG_INFO ("APPTIME: " << (2*runtime)/3);
-
   }
 
+  apps = coapnode.Install(nodes.Get (1));
+  apps.Start (Seconds (0.0));
+  NS_LOG_INFO ("SIM TIME: " << runtime);
+  if(runtime>900){
+    apps.Stop (Seconds (runtime - 300));
+    NS_LOG_INFO ("APPTIME: " << runtime -300);
+  }else{
+    apps.Stop (Seconds ((2*runtime)/3));
+    NS_LOG_INFO ("APPTIME: " << (2*runtime)/3);
+  }
+
+  apps = coapnode.Install(nodes.Get (2));
+  apps.Start (Seconds (0.0));
+  NS_LOG_INFO ("SIM TIME: " << runtime);
+  if(runtime>900){
+    apps.Stop (Seconds (runtime - 300));
+    NS_LOG_INFO ("APPTIME: " << runtime -300);
+  }else{
+    apps.Stop (Seconds ((2*runtime)/3));
+    NS_LOG_INFO ("APPTIME: " << (2*runtime)/3);
+  }
 
   /*
   CoapServerHelper coapserver (5683);

@@ -114,6 +114,7 @@ bool CoapNode::recvDtg(Ptr<Socket>socket) {
           // if(m_activatePing) ping(InetSocketAddress::ConvertFrom (from).GetIpv4(),COAP_DEFAULT_PORT);
         }
       }
+      deleteOutdated();
     }
     else if ((packet.type == COAP_CON) && (packet.code != 0x00)) { // It is a request
       // call endpoint url function

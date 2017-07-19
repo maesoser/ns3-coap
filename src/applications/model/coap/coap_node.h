@@ -69,12 +69,7 @@
 #define MAX_DNSPACKET_SIZE 2048
 
 #define RESPONSE_CODE(class, detail) ((class << 5) | (detail))
-#define COAP_OPTION_DELTA(v,                                                   \
-                          n) (v <                                              \
-                              13 ? (*n = (0xFF & v)) : (v <=                   \
-                                                        0xFF +                 \
-                                                        13 ? (*n = 13) : (*n = \
-                                                                            14)))
+#define COAP_OPTION_DELTA(v,n) (v < 13 ? (*n = (0xFF & v)) : (v <=0xFF + 13 ? (*n = 13) : (*n = 14)))
 
 #define PKT_NOTFOUND 0
 #define PKT_DELAYED 1

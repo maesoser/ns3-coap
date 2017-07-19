@@ -44,25 +44,30 @@ int CoapNode::GetEntryIndex(size_t nodeid) {
 
  */
 uint32_t CoapNode::deleteOutdated() {
-  if (m_ageTime == 0) return 0;  // No está activada la opciónd e expiración
+  // if (m_ageTime == 0) return 0;  // No está activada la opciónd e expiración
 
   if (m_cache.empty()) return 0;
 
-  uint32_t ndel = 0;
+  uint32_t startsize =  m_cache.size();
 
-  for (u_int32_t i = 0; i < m_cache.size(); ++i) {
+  /*for (u_int32_t i = 0; i < m_cache.size(); ++i) {
     // NS_LOG_INFO ("NOW "<<Simulator::Now().GetSeconds()<<" CACHE "<<m_cache[i].age.GetSeconds());
-    if (m_cache[i].age > UINT32_MAX-1) {
+    if ((m_cache[i].age > UINT32_MAX - 1) || (m_ageTime == 0) || (Simulator::Now().GetSeconds() > m_cache[i].age) || (m_cache[i].age == 0)) {
       m_cache.erase(m_cache.begin() + i);
       ndel = ndel + 1;
-    } else {
-      if (Simulator::Now().GetSeconds() > m_cache[i].age) {
-        m_cache.erase(m_cache.begin() + i);
-        ndel = ndel + 1;
-      }
     }
+  }*/
+
+  m_cache.erase(
+    std::remove_if(
+      m_cache.begin(), m_cache.end(), [](coapCacheItem item) {
+          return (item.age > UINT32_MAX - 1) || (Simulator::Now().GetSeconds() > item.age);
   }
-  return ndel;
+      ),
+    m_cache.end()
+    );
+
+  return startsize - m_cache.size();
 }
 
 bool CoapNode::deleteEntry(size_t nodeid) {
@@ -105,10 +110,10 @@ void CoapNode::showCache() {
      NS_LOG_INFO("CACHE_DUMP,"<<Simulator::Now ().GetSeconds ()<<","<< GetAddr()<<",EMP");
      }
    */
+  deleteOutdated();
   saveCache();
   m_showCache = Simulator::Schedule(Seconds(m_cacheinterval), &CoapNode::showCache, this);
   checkCache();
-  deleteOutdated();
 }
 
 void CoapNode::saveCache() {
@@ -138,26 +143,24 @@ void CoapNode::sendMDnsCache(Query query, Address from, uint16_t uid) {
 
   dumpIDList();
 
-  // checkCache();
-  deleteOutdated();
-
   //  89.4992 10.1.1.13 RECV 67 bytes from 10.1.1.13 DNS ANSWER ID:50668
 
   MDns cmdns(m_dnssocket, m_txTrace);
   cmdns.mDNSId = uid;
   cmdns.Clear();
 
-  Ipv4Address dnsmcast(MDNS_MCAST_ADDR);
-
   int servsent  = 0; // services valid to be sent
   int servtotal = 1; // Total number of services
+
+  Ipv4Address dnsmcast(MDNS_MCAST_ADDR);
+  deleteOutdated();
 
   if ((m_cacheopt != 0) && !m_cache.empty()) {
     for (u_int32_t i = 0; i < m_cache.size(); ++i) {
       if (m_stime == PARTIAL_SELECTIVE) {
         servtotal++;
 
-        if (checkServiceInDelayedResponse(uid, m_cache[i].ip, m_cache[i].url) == false) {
+        if ((checkServiceInDelayedResponse(uid, m_cache[i].ip, m_cache[i].url) == false) && (m_cache[i].age - (uint32_t)Simulator::Now().GetSeconds() > 0)) {
           servsent++;
           std::ostringstream oss;
           m_cache[i].ip.Print(oss);
@@ -170,7 +173,7 @@ void CoapNode::sendMDnsCache(Query query, Address from, uint16_t uid) {
           strncpy(rransw.name_buffer,  query.qname_buffer, MAX_MDNS_NAME_LEN);
           rransw.rrtype  = MDNS_TYPE_PTR;
           rransw.rrclass = 1; // "INternet"
-          rransw.rrttl   = m_cache[i].age;
+          rransw.rrttl   = m_cache[i].age - (uint32_t)Simulator::Now().GetSeconds();
           rransw.rrset   = 1;
           cmdns.AddAnswer(rransw);
 
@@ -189,7 +192,7 @@ void CoapNode::sendMDnsCache(Query query, Address from, uint16_t uid) {
         strncpy(rransw.name_buffer,  query.qname_buffer, MAX_MDNS_NAME_LEN);
         rransw.rrtype  = MDNS_TYPE_PTR;
         rransw.rrclass = 1; // "INternet"
-        rransw.rrttl   = m_cache[i].age;
+        rransw.rrttl   = m_cache[i].age - (uint32_t)Simulator::Now().GetSeconds();
         rransw.rrset   = 1;
         cmdns.AddAnswer(rransw);
 
