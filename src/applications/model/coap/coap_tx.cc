@@ -33,14 +33,14 @@ void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid) {
   // Si el apquete ya ha sido respondido, nada
   if ((m_stime > 0) && (checkID(messageid) == PKT_CANCELED)) {
     setIDStatus(messageid, PKT_OUTDATED);
-    NS_LOG_INFO(Simulator::Now().GetSeconds() << " M_STIME from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4Address::ConvertFrom(ip) << " CACHE: " << 0 << " of " << m_cache.size() + 1);
+    NS_LOG_INFO(Simulator::Now().GetSeconds() << " M_STIME:"<<messageid<<" from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4Address::ConvertFrom(ip) << " CACHE: " << 0 << " of " << m_cache.size() + 1);
     NS_LOG_INFO(Simulator::Now().GetSeconds() << " " << GetAddr() << " CANCELED ANSWER to " << Ipv4Address::ConvertFrom(ip) << " ID:" << messageid);
     return;
   }
 
   // Si el paquete ha caducado, nada
   if ((m_stime > 0) && (checkID(messageid) == PKT_OUTDATED)) {
-    NS_LOG_INFO(Simulator::Now().GetSeconds() << " M_STIME from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4Address::ConvertFrom(ip) << " CACHE: " << 0 << " of " << m_cache.size() + 1);
+    NS_LOG_INFO(Simulator::Now().GetSeconds() << " M_STIME:"<<messageid<<" from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4Address::ConvertFrom(ip) << " CACHE: " << 0 << " of " << m_cache.size() + 1);
     return;
   }
 
@@ -59,7 +59,7 @@ void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid) {
         total_possible++;
 
         if (m_stime == PARTIAL_SELECTIVE) {
-          if (checkServiceInDelayedResponse(messageid, m_cache[i].ip, m_cache[i].url) == false && m_cache[i].age < Simulator::Now().GetSeconds()) {
+          if (checkServiceInDelayedResponse(messageid, m_cache[i].ip, m_cache[i].url) == false) {
             result = result + "</" + Ipv4AddressToString(m_cache[i].ip) + "/" + m_cache[i].url + ">;title=\"This is a test\",";
             i_partial++;
           }
@@ -98,11 +98,11 @@ void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid) {
 
   // If we do not have anything to send, dont send it
   if ((m_stime == PARTIAL_SELECTIVE) && (i_partial == 0)) { // No más que enviar
-    NS_LOG_INFO(Simulator::Now().GetSeconds() << " M_STIME from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4Address::ConvertFrom(ip) << " CACHE: 0 of " << total_possible);
+    NS_LOG_INFO(Simulator::Now().GetSeconds() << " M_STIME:"<<messageid<<" from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4Address::ConvertFrom(ip) << " CACHE: 0 of " << total_possible);
     return;
   }
 
-  NS_LOG_INFO(Simulator::Now().GetSeconds() << " M_STIME from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4Address::ConvertFrom(ip) << " CACHE: " << i_total << " of " << total_possible);
+  NS_LOG_INFO(Simulator::Now().GetSeconds() << " M_STIME:"<<messageid<<" from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4Address::ConvertFrom(ip) << " CACHE: " << i_total << " of " << total_possible);
 
   if (m_mcast) {
     sendCachePart(m_mcastAddr, port, messageid, result);

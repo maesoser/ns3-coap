@@ -50,14 +50,6 @@ uint32_t CoapNode::deleteOutdated() {
 
   uint32_t startsize =  m_cache.size();
 
-  /*for (u_int32_t i = 0; i < m_cache.size(); ++i) {
-    // NS_LOG_INFO ("NOW "<<Simulator::Now().GetSeconds()<<" CACHE "<<m_cache[i].age.GetSeconds());
-    if ((m_cache[i].age > UINT32_MAX - 1) || (m_ageTime == 0) || (Simulator::Now().GetSeconds() > m_cache[i].age) || (m_cache[i].age == 0)) {
-      m_cache.erase(m_cache.begin() + i);
-      ndel = ndel + 1;
-    }
-  }*/
-
   m_cache.erase(
     std::remove_if(
       m_cache.begin(), m_cache.end(), [](coapCacheItem item) {
@@ -132,12 +124,12 @@ void CoapNode::sendMDnsCache(Query query, Address from, uint16_t uid) {
   if ((m_stime > 0) && (checkID(uid) == PKT_CANCELED)) {
     setIDStatus(uid, PKT_OUTDATED); // xq ya no es válido, lo he cancelado
     NS_LOG_INFO(Simulator::Now().GetSeconds() << " " << GetAddr() << " CANCELED ANSWER to " << Ipv4AddressToString(InetSocketAddress::ConvertFrom(from).GetIpv4()) << " ID:" << uid);
-    NS_LOG_INFO(Simulator::Now().GetSeconds() << " M_STIME from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4AddressToString(InetSocketAddress::ConvertFrom(from).GetIpv4()) << " CACHE: " << 0 << " of " << m_cache.size() + 1);
+    NS_LOG_INFO(Simulator::Now().GetSeconds() << " M_STIME:"<<uid<<" from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4AddressToString(InetSocketAddress::ConvertFrom(from).GetIpv4()) << " CACHE: " << 0 << " of " << m_cache.size() + 1);
     return;
   }
 
   if ((m_stime > 0) && (checkID(uid) == PKT_OUTDATED)) {
-    NS_LOG_INFO(Simulator::Now().GetSeconds() << " M_STIME from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4AddressToString(InetSocketAddress::ConvertFrom(from).GetIpv4()) << " CACHE: " << 0 << " of " << m_cache.size() + 1);
+    NS_LOG_INFO(Simulator::Now().GetSeconds() << " M_STIME:"<<uid<<" from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4AddressToString(InetSocketAddress::ConvertFrom(from).GetIpv4()) << " CACHE: " << 0 << " of " << m_cache.size() + 1);
     return;
   }
 
@@ -230,7 +222,7 @@ void CoapNode::sendMDnsCache(Query query, Address from, uint16_t uid) {
   }
 
   if (m_stime == PARTIAL_SELECTIVE) {
-    NS_LOG_INFO(Simulator::Now().GetSeconds() << " M_STIME from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4AddressToString(InetSocketAddress::ConvertFrom(from).GetIpv4()) << " CACHE: " << servsent << " of " << servtotal);
+    NS_LOG_INFO(Simulator::Now().GetSeconds() << " M_STIME:"<<uid<<" from " << Ipv4AddressToString(GetAddr()) << " to " << Ipv4AddressToString(InetSocketAddress::ConvertFrom(from).GetIpv4()) << " CACHE: " << servsent << " of " << servtotal);
   }
 
   setIDStatus(uid, PKT_OUTDATED); // xq ya no es válido, lo he enviado una vez
