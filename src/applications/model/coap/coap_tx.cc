@@ -55,9 +55,14 @@ void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid) {
 
   if ((m_cacheopt != 0) && !m_cache.empty()) {       // Check if the cache is empty
     for (u_int32_t i = 0; i < m_cache.size(); ++i) { // Go through the cache
-      if (m_cache[i].ip != ip) {                     // Evita que le rewspondamos con su propio servicio
-        total_possible++;
 
+      /*
+      This line is a detail which could be interesting if you want to save transmissions.
+      If a node is working on  multicast mode, and someone ask him, he should answer including the services provided by the node who answer
+      In order to help other nodes and avoid 1 service transmissions.
+      */
+      if (m_cache[i].ip != ip || m_mcast) {                     // Evita que le respondamos con su propio servicio
+        total_possible++;
         if (m_stime == PARTIAL_SELECTIVE) {
           if (checkServiceInDelayedResponse(messageid, m_cache[i].ip, m_cache[i].url) == false) {
             result = result + "</" + Ipv4AddressToString(m_cache[i].ip) + "/" + m_cache[i].url + ">;title=\"This is a test\",";
@@ -70,13 +75,13 @@ void CoapNode::sendCache(Ipv4Address ip, int port, uint16_t messageid) {
       }
 
       /*   THIS CODE SPLIT UP MESSAGES IN APPLICATION LAYER. DONT
-                if(i_partial==4){
-                                      i_total += i_partial;
-         totalresult += result;
-                      sendCachePart(ip,port, messageid, result);
-         i_partial = 0;
-                      result = "";
-                }
+      if(i_partial==4){
+        i_total += i_partial;
+        totalresult += result;
+        sendCachePart(ip,port, messageid, result);
+        i_partial = 0;
+        result = "";
+      }
        */
     }
   }
